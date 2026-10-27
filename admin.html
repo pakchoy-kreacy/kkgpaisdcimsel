@@ -35,6 +35,7 @@
             <button data-tab="dokumentasi" class="admin-tab px-4 py-2 rounded-lg bg-emerald-600 text-white">Dokumentasi</button>
             <button data-tab="aspirasi" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Aspirasi</button>
             <button data-tab="anggota" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Anggota</button>
+            <button data-tab="akun" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Akun</button>
         </nav>
 
         <!-- Dokumentasi -->
@@ -79,6 +80,20 @@
             <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
                 <h2 class="font-bold text-lg mb-4">Data Anggota</h2>
                 <ul id="list-anggota" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <!-- Akun -->
+        <div id="tab-akun" class="admin-panel hidden">
+            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md">
+                <h2 class="font-bold text-lg mb-1">Ubah Kata Sandi</h2>
+                <p id="akun-email" class="text-xs text-slate-500 mb-4"></p>
+                <form id="form-password" class="space-y-4">
+                    <input id="pw-baru" type="password" minlength="8" required placeholder="Kata sandi baru (min. 8 karakter)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    <input id="pw-ulang" type="password" minlength="8" required placeholder="Ulangi kata sandi baru" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Kata Sandi</button>
+                    <p id="pw-status" class="text-sm text-slate-600 hidden"></p>
+                </form>
             </section>
         </div>
     </main>

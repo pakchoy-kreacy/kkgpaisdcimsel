@@ -18,7 +18,32 @@ function showTab(name) {
     if (name === 'dokumentasi') loadDokumentasi();
     if (name === 'aspirasi') loadAspirasi();
     if (name === 'anggota') loadAnggota();
+    if (name === 'akun') loadAkun();
 }
+
+// Akun
+async function loadAkun() {
+    const { data } = await db.auth.getUser();
+    $('akun-email').innerText = data.user ? `Masuk sebagai ${data.user.email}` : '';
+}
+
+$('form-password').addEventListener('submit', async e => {
+    e.preventDefault();
+    const status = $('pw-status');
+    status.classList.remove('hidden');
+    if ($('pw-baru').value !== $('pw-ulang').value) {
+        status.innerText = 'Kata sandi tidak sama.';
+        return;
+    }
+    const { error } = await db.auth.updateUser({ password: $('pw-baru').value });
+    if (error) {
+        console.error(error);
+        status.innerText = 'Gagal mengubah kata sandi: ' + error.message;
+        return;
+    }
+    status.innerText = 'Kata sandi berhasil diubah.';
+    $('form-password').reset();
+});
 
 function showApp(loggedIn) {
     $('sec-login').classList.toggle('hidden', loggedIn);
