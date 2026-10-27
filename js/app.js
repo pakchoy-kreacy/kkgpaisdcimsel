@@ -61,10 +61,13 @@ async function loadAnggota() {
 
 function renderAnggota(items) {
     const tbody = document.getElementById('table-body-anggota');
+    const mobile = document.getElementById('list-anggota-mobile');
     tbody.innerHTML = '';
+    mobile.innerHTML = '';
 
     if (items.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Data anggota tidak ditemukan.</td></tr>`;
+        mobile.innerHTML = `<p class="bg-white rounded-2xl border border-slate-200 p-6 text-center text-sm text-slate-400">Data anggota tidak ditemukan.</p>`;
         return;
     }
 
@@ -89,6 +92,20 @@ function renderAnggota(items) {
             <td class="p-4"><span class="px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span></td>
         `;
         tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4';
+        card.innerHTML = `
+            <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0">
+                    <div class="font-bold text-slate-800 break-words">${escapeHtml(item.nama)}</div>
+                    <div class="text-xs text-slate-400 break-all">NIP/NUPTK: ${escapeHtml(item.nip)}</div>
+                </div>
+                <span class="shrink-0 px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span>
+            </div>
+            <div class="mt-3 text-sm text-slate-700 font-medium">${escapeHtml(item.sekolah)}</div>
+            <div class="mt-1 text-xs text-slate-500">${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)}</div>`;
+        mobile.appendChild(card);
     });
 }
 
