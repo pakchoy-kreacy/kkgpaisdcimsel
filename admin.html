@@ -8,161 +8,219 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Navigasi: bar bawah di HP, tab di layar lebar */
-        .admin-tab { color: #64748b; }
-        .admin-tab[aria-current="page"] { color: #047857; font-weight: 700; }
-        @media (min-width: 768px) {
-            .admin-tab { background: #fff; border: 1px solid #e2e8f0; }
-            .admin-tab[aria-current="page"] { background: #059669; border-color: #059669; color: #fff; }
-        }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-    </style>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
     <header class="sticky top-0 z-30 bg-white border-b border-emerald-100 px-4 h-14 flex justify-between items-center">
         <div class="flex items-center gap-2 min-w-0">
-            <a href="index.html" aria-label="Kembali ke portal" class="w-11 h-11 -ml-3 flex items-center justify-center text-emerald-700"><i class="fa-solid fa-arrow-left"></i></a>
+            <button id="btn-back" aria-label="Kembali" class="w-11 h-11 -ml-3 flex items-center justify-center text-emerald-700"><i class="fa-solid fa-arrow-left"></i></button>
             <h1 id="judul-halaman" class="font-bold text-emerald-900 truncate">Admin KKG PAI SD</h1>
         </div>
         <button id="btn-logout" class="hidden h-11 px-3 -mr-3 text-sm text-slate-600 hover:text-red-600"><i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar</button>
     </header>
 
-    <main id="admin-main" class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 pb-10">
         <!-- Login -->
-        <section id="sec-login" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md mx-auto">
+        <section id="sec-login" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 max-w-md mx-auto">
             <h2 class="font-bold text-lg mb-4">Masuk Pengurus</h2>
             <form id="form-login" class="space-y-4">
-                <input id="login-email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Email pengurus" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                <input id="login-password" type="password" required autocomplete="current-password" placeholder="Kata sandi" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Masuk</button>
+                <input id="login-email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Email pengurus" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <input id="login-password" type="password" required autocomplete="current-password" placeholder="Kata sandi" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60">Masuk</button>
                 <p id="login-error" class="text-sm text-red-600 hidden"></p>
-                <button type="button" id="btn-lupa" class="text-xs text-emerald-700 hover:underline">Lupa kata sandi?</button>
+                <button type="button" id="btn-lupa" class="text-sm text-emerald-700 hover:underline h-11">Lupa kata sandi?</button>
                 <p id="lupa-status" class="text-sm text-slate-600 hidden"></p>
             </form>
         </section>
 
-        <!-- Tabs -->
-        <nav id="admin-tabs" class="hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 pb-safe md:static md:bg-transparent md:border-0 md:pb-0">
-            <div class="grid grid-cols-5 md:flex md:gap-2">
-                <button data-tab="dokumentasi" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-images text-lg md:text-sm"></i>Galeri</button>
-                <button data-tab="aspirasi" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-comments text-lg md:text-sm"></i>Aspirasi</button>
-                <button data-tab="anggota" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-users text-lg md:text-sm"></i>Anggota</button>
-                <button data-tab="kontak" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-gear text-lg md:text-sm"></i>Pengaturan</button>
-                <button data-tab="akun" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-user-lock text-lg md:text-sm"></i>Akun</button>
-            </div>
-        </nav>
+        <!-- Menu -->
+        <div id="admin-menu" class="hidden grid grid-cols-2 md:grid-cols-3 gap-3">
+                <button data-open="dokumentasi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-images text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Galeri</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Foto kegiatan</span>
+                </button>
+                <button data-open="informasi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-bullhorn text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Informasi</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Pengumuman</span>
+                </button>
+                <button data-open="agenda" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-calendar-days text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Agenda</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Jadwal & buka presensi</span>
+                </button>
+                <button data-open="presensi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-clipboard-user text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Rekap Presensi</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Daftar hadir</span>
+                </button>
+                <button data-open="perangkat" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-book-open text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Perangkat Ajar</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Modul & berkas</span>
+                </button>
+                <button data-open="pengurus" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-people-group text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Pengurus</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Susunan pengurus</span>
+                </button>
+                <button data-open="anggota" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-users text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Anggota</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Setujui & kelola</span>
+                </button>
+                <button data-open="aspirasi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-comments text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Masukan</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Saran dari guru</span>
+                </button>
+                <button data-open="pengaturan" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-gear text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Pengaturan</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Kontak, profil, gugus</span>
+                </button>
+                <button data-open="akun" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-user-lock text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Akun</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Ganti kata sandi</span>
+                </button>
+        </div>
 
-        <!-- Dokumentasi -->
-        <div id="tab-dokumentasi" class="admin-panel hidden space-y-6">
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
-                <h2 class="font-bold text-lg mb-4">Tambah Dokumentasi</h2>
-                <form id="form-upload" class="space-y-4">
-                    <input id="up-judul" required placeholder="Judul kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="up-kategori" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white">
-                            <option>Kreatif</option>
-                            <option>Edukatif</option>
-                            <option>Religius</option>
-                            <option>Empati</option>
-                            <option>Nalar Digital</option>
-                        </select>
-                        <input id="up-tanggal" type="date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                    </div>
-                    <input id="up-lokasi" required placeholder="Lokasi kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                    <textarea id="up-deskripsi" rows="3" placeholder="Deskripsi singkat" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
-                    <input id="up-foto" type="file" accept="image/jpeg,image/png" required class="w-full text-sm">
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Dokumentasi</button>
-                    <p id="up-status" class="text-sm text-slate-600 hidden"></p>
-                </form>
-            </section>
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
-                <h2 class="font-bold text-lg mb-4">Daftar Dokumentasi</h2>
+        <div id="tab-dokumentasi" class="admin-panel hidden space-y-4">
+            <form id="form-dokumentasi" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Tambah Foto Galeri</h2>
+                <label class="block text-sm font-semibold text-slate-700">Judul kegiatan<span class="block mt-1"><input id="dok-judul" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><div class="grid grid-cols-2 gap-3"><label class="block text-sm font-semibold text-slate-700">Kategori<span class="block mt-1"><select id="dok-kategori" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Kreatif</option><option>Edukatif</option><option>Religius</option><option>Empati</option><option>Nalar Digital</option></select></span></label><label class="block text-sm font-semibold text-slate-700">Tanggal<span class="block mt-1"><input id="dok-tanggal" type="date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label></div><label class="block text-sm font-semibold text-slate-700">Lokasi<span class="block mt-1"><input id="dok-lokasi" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Deskripsi<span class="block mt-1"><textarea id="dok-deskripsi" rows="3" maxlength="1000" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label><label class="block text-sm font-semibold text-slate-700">Foto<span class="block text-xs font-normal text-slate-500 mt-0.5">JPG atau PNG, maksimal 3 MB</span><span class="block mt-1"><input id="dok-foto" type="file" accept="image/jpeg,image/png" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Simpan Foto</button>
+                <p id="form-dokumentasi-status" class="text-sm text-center hidden"></p>
+            </form>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Daftar Galeri</h2>
                 <ul id="list-dokumentasi" class="divide-y divide-slate-100 text-sm"></ul>
             </section>
         </div>
 
-        <!-- Aspirasi -->
-        <div id="tab-aspirasi" class="admin-panel hidden">
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
-                <h2 class="font-bold text-lg mb-4">Aspirasi Masuk</h2>
-                <ul id="list-aspirasi" class="divide-y divide-slate-100 text-sm"></ul>
+        <div id="tab-informasi" class="admin-panel hidden space-y-4">
+            <form id="form-informasi" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Tambah Informasi</h2>
+                <label class="block text-sm font-semibold text-slate-700">Judul<span class="block mt-1"><input id="inf-judul" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Tanggal<span class="block mt-1"><input id="inf-tanggal" type="date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Isi informasi<span class="block mt-1"><textarea id="inf-isi" rows="5" required maxlength="3000" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Informasi</button>
+                <p id="form-informasi-status" class="text-sm text-center hidden"></p>
+            </form>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Daftar Informasi</h2>
+                <ul id="list-informasi" class="divide-y divide-slate-100 text-sm"></ul>
             </section>
         </div>
 
-        <!-- Anggota -->
-        <div id="tab-anggota" class="admin-panel hidden">
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
-                <h2 class="font-bold text-lg mb-4">Data Anggota</h2>
+        <div id="tab-agenda" class="admin-panel hidden space-y-4">
+            <form id="form-agenda" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Tambah Agenda</h2>
+                <label class="block text-sm font-semibold text-slate-700">Judul kegiatan<span class="block mt-1"><input id="ag-judul" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><div class="grid grid-cols-2 gap-3"><label class="block text-sm font-semibold text-slate-700">Kategori<span class="block mt-1"><select id="ag-kategori" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Kreatif</option><option>Edukatif</option><option>Religius</option><option>Empati</option><option>Nalar Digital</option><option>Rutin</option><option>Lainnya</option></select></span></label><label class="block text-sm font-semibold text-slate-700">Tanggal<span class="block mt-1"><input id="ag-tanggal" type="date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label></div><label class="block text-sm font-semibold text-slate-700">Waktu<span class="block mt-1"><input id="ag-waktu" type="text" maxlength="50" placeholder="08.00 - 12.00 WIB" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Lokasi<span class="block mt-1"><input id="ag-lokasi" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Deskripsi<span class="block mt-1"><textarea id="ag-deskripsi" rows="3" maxlength="1000" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label><label class="flex items-center gap-3 min-h-11 text-sm font-semibold text-slate-700"><input id="ag-buka" type="checkbox" class="w-5 h-5 accent-emerald-600">Buka presensi sekarang</label>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Agenda</button>
+                <p id="form-agenda-status" class="text-sm text-center hidden"></p>
+            </form>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Daftar Agenda</h2>
+                <ul id="list-agenda" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <div id="tab-presensi" class="admin-panel hidden space-y-4">
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Rekap Presensi</h2>
+                <label class="block text-sm font-semibold text-slate-700">Pilih kegiatan<span class="block mt-1"><select id="pres-pilih" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></span></label>
+                <div class="flex items-center justify-between gap-3">
+                    <p id="pres-total" class="text-sm text-slate-600"></p>
+                    <button id="btn-csv-presensi" type="button" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-file-csv mr-2"></i>Unduh CSV</button>
+                </div>
+                <ul id="list-presensi" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <div id="tab-perangkat" class="admin-panel hidden space-y-4">
+            <form id="form-perangkat" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Tambah Perangkat Ajar</h2>
+                <label class="block text-sm font-semibold text-slate-700">Judul<span class="block mt-1"><input id="pa-judul" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><div class="grid grid-cols-2 gap-3"><label class="block text-sm font-semibold text-slate-700">Jenis<span class="block mt-1"><select id="pa-jenis" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Modul Ajar</option><option>ATP/CP</option><option>Asesmen/Soal</option><option>Media Ajar</option><option>Administrasi</option><option>Lainnya</option></select></span></label><label class="block text-sm font-semibold text-slate-700">Kelas<span class="block mt-1"><select id="pa-kelas" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Semua</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></span></label></div><label class="block text-sm font-semibold text-slate-700">Deskripsi<span class="block mt-1"><textarea id="pa-deskripsi" rows="2" maxlength="500" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label><label class="block text-sm font-semibold text-slate-700">Tautan (Google Drive, dll.)<span class="block text-xs font-normal text-slate-500 mt-0.5">Isi tautan, atau unggah berkas di bawah</span><span class="block mt-1"><input id="pa-url" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Atau unggah berkas<span class="block text-xs font-normal text-slate-500 mt-0.5">PDF, Word, PowerPoint, Excel, maksimal 10 MB</span><span class="block mt-1"><input id="pa-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Simpan Perangkat Ajar</button>
+                <p id="form-perangkat-status" class="text-sm text-center hidden"></p>
+            </form>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Daftar Perangkat Ajar</h2>
+                <ul id="list-perangkat" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <div id="tab-pengurus" class="admin-panel hidden space-y-4">
+            <form id="form-pengurus" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base">Tambah Pengurus</h2>
+                <label class="block text-sm font-semibold text-slate-700">Nama<span class="block mt-1"><input id="pg-nama" type="text" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Jabatan<span class="block mt-1"><input id="pg-jabatan" type="text" required maxlength="100" placeholder="Ketua, Sekretaris, ..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Urutan tampil<span class="block text-xs font-normal text-slate-500 mt-0.5">Angka kecil tampil lebih dulu</span><span class="block mt-1"><input id="pg-urutan" type="number" min="1" max="999" value="10" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Foto (opsional)<span class="block text-xs font-normal text-slate-500 mt-0.5">JPG atau PNG, maksimal 3 MB</span><span class="block mt-1"><input id="pg-foto" type="file" accept="image/jpeg,image/png" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengurus</button>
+                <p id="form-pengurus-status" class="text-sm text-center hidden"></p>
+            </form>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Susunan Pengurus</h2>
+                <ul id="list-pengurus" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <div id="tab-anggota" class="admin-panel hidden space-y-4">
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <h2 class="font-bold text-base">Data Anggota <span id="anggota-total" class="font-normal text-slate-500"></span></h2>
+                    <button id="btn-csv-anggota" type="button" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-file-csv mr-2"></i>CSV</button>
+                </div>
                 <ul id="list-anggota" class="divide-y divide-slate-100 text-sm"></ul>
             </section>
         </div>
 
-        <!-- Kontak & Sosmed -->
-        <div id="tab-kontak" class="admin-panel hidden">
-            <form id="form-kontak" class="space-y-4 max-w-xl">
-                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                    <div>
-                        <h2 class="font-bold text-base"><i class="fa-solid fa-address-book text-emerald-600 mr-2"></i>Kontak Sekretariat</h2>
-                        <p class="text-xs text-slate-500 mt-1">Tampil di halaman Aspirasi & Kontak. Kolom kosong tidak ditampilkan.</p>
-                    </div>
-                    <label class="block text-sm font-semibold text-slate-700">Alamat
-                        <textarea id="set-alamat" rows="2" maxlength="300" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                    </label>
-                    <label class="block text-sm font-semibold text-slate-700">Email
-                        <input id="set-email" type="email" inputmode="email" autocapitalize="none" maxlength="150" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </label>
-                    <label class="block text-sm font-semibold text-slate-700">Nomor HP / WhatsApp
-                        <input id="set-telepon" type="tel" inputmode="tel" maxlength="30" placeholder="0812xxxxxxx" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </label>
-                </section>
+        <div id="tab-aspirasi" class="admin-panel hidden space-y-4">
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-2">Masukan & Saran Masuk</h2>
+                <ul id="list-aspirasi" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
 
+        <div id="tab-pengaturan" class="admin-panel hidden space-y-4">
+            <form id="form-pengaturan" class="space-y-4 max-w-xl">
                 <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                    <div>
-                        <h2 class="font-bold text-base"><i class="fa-solid fa-share-nodes text-emerald-600 mr-2"></i>Media Sosial</h2>
-                        <p class="text-xs text-slate-500 mt-1">Tempel link lengkap yang diawali https://. Ikon hanya tampil di footer jika diisi.</p>
-                    </div>
-                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-facebook text-blue-600 mr-1"></i>Facebook
-                        <input id="set-facebook" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://facebook.com/..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </label>
-                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-youtube text-red-600 mr-1"></i>YouTube
-                        <input id="set-youtube" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://youtube.com/@..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </label>
-                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-instagram text-pink-600 mr-1"></i>Instagram
-                        <input id="set-instagram" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://instagram.com/..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </label>
+                    <h2 class="font-bold text-base"><i class="fa-solid fa-circle-info text-emerald-600 mr-2"></i>Profil Organisasi</h2>
+                    <label class="block text-sm font-semibold text-slate-700">Tentang KKG PAI SD<span class="block text-xs font-normal text-slate-500 mt-0.5">Sejarah, tugas, dan peran KKG. Baris baru ikut tampil.</span><span class="block mt-1"><textarea id="set-profil" rows="8" maxlength="4000" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
                 </section>
-
                 <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                    <div>
-                        <h2 class="font-bold text-base"><i class="fa-solid fa-school text-emerald-600 mr-2"></i>Gugus & Kelurahan</h2>
-                        <p class="text-xs text-slate-500 mt-1">Satu nama per baris. Dipakai di filter dan formulir pendaftaran anggota.</p>
-                    </div>
-                    <label class="block text-sm font-semibold text-slate-700">Daftar Gugus
-                        <textarea id="set-daftar_gugus" rows="9" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
-                    </label>
-                    <label class="block text-sm font-semibold text-slate-700">Daftar Kelurahan
-                        <textarea id="set-daftar_kelurahan" rows="5" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
-                    </label>
+                    <h2 class="font-bold text-base"><i class="fa-solid fa-address-book text-emerald-600 mr-2"></i>Kontak Sekretariat</h2>
+                    <label class="block text-sm font-semibold text-slate-700">Alamat<span class="block mt-1"><textarea id="set-alamat" rows="2" maxlength="300" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Email<span class="block mt-1"><input id="set-email" type="email" inputmode="email" autocapitalize="none" maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Nomor HP / WhatsApp<span class="block mt-1"><input id="set-telepon" type="tel" inputmode="tel" maxlength="30" placeholder="0812xxxxxxx" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
                 </section>
-
-                <div class="sticky bottom-20 md:bottom-4 z-30">
-                    <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengaturan</button>
+                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                    <h2 class="font-bold text-base"><i class="fa-solid fa-share-nodes text-emerald-600 mr-2"></i>Media Sosial</h2>
+                    <p class="text-xs text-slate-500">Tempel link lengkap berawalan https://. Kolom kosong tidak ditampilkan.</p>
+                    <label class="block text-sm font-semibold text-slate-700">Facebook<span class="block mt-1"><input id="set-facebook" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://facebook.com/..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">YouTube<span class="block mt-1"><input id="set-youtube" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://youtube.com/@..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Instagram<span class="block mt-1"><input id="set-instagram" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://instagram.com/..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                </section>
+                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                    <h2 class="font-bold text-base"><i class="fa-solid fa-school text-emerald-600 mr-2"></i>Gugus & Kelurahan</h2>
+                    <label class="block text-sm font-semibold text-slate-700">Daftar Gugus<span class="block text-xs font-normal text-slate-500 mt-0.5">Satu nama per baris</span><span class="block mt-1"><textarea id="set-daftar_gugus" rows="9" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Daftar Kelurahan<span class="block text-xs font-normal text-slate-500 mt-0.5">Satu nama per baris</span><span class="block mt-1"><textarea id="set-daftar_kelurahan" rows="5" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
+                </section>
+                <div class="sticky bottom-4 z-30">
+                    <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60 shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengaturan</button>
                 </div>
-                <p id="kontak-status" class="text-sm text-center hidden"></p>
+                <p id="form-pengaturan-status" class="text-sm text-center hidden"></p>
             </form>
         </div>
 
-        <!-- Akun -->
-        <div id="tab-akun" class="admin-panel hidden">
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md">
-                <h2 class="font-bold text-lg mb-1">Ubah Kata Sandi</h2>
+        <div id="tab-akun" class="admin-panel hidden space-y-4">
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 max-w-md">
+                <h2 class="font-bold text-base mb-1">Ubah Kata Sandi</h2>
                 <p id="akun-email" class="text-xs text-slate-500 mb-4"></p>
                 <form id="form-password" class="space-y-4">
-                    <input id="pw-baru" type="password" minlength="8" required placeholder="Kata sandi baru (min. 8 karakter)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                    <input id="pw-ulang" type="password" minlength="8" required placeholder="Ulangi kata sandi baru" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Kata Sandi</button>
+                    <input type="email" autocomplete="username" class="hidden" id="pw-username" tabindex="-1" aria-hidden="true">
+                    <input id="pw-baru" type="password" minlength="8" required autocomplete="new-password" placeholder="Kata sandi baru (min. 8 karakter)" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input id="pw-ulang" type="password" minlength="8" required autocomplete="new-password" placeholder="Ulangi kata sandi baru" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60">Simpan Kata Sandi</button>
                     <p id="pw-status" class="text-sm text-slate-600 hidden"></p>
                 </form>
             </section>

@@ -1,15 +1,35 @@
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let dataAnggota = [];
+// ---------- Umum ----------
 
-// Logo SVG (fallback inline)
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function publicUrl(bucket, path) {
+    return db.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+function tanggalIndo(iso, pendek) {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', pendek
+        ? { day: '2-digit', month: 'short' }
+        : { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function hariIni() {
+    return new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD, zona waktu perangkat
+}
+
+function pesanKosong(teks) {
+    return `<p class="col-span-full text-center text-sm text-slate-400 py-6">${escapeHtml(teks)}</p>`;
+}
+
 function setupLogo() {
     const logoSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><circle cx="150" cy="150" r="146" fill="%23047857" stroke="%23000" stroke-width="5"/><circle cx="150" cy="150" r="122" fill="%2310b981" stroke="%23064e3b" stroke-width="4"/><g fill="none" stroke="%23f59e0b" stroke-width="8" stroke-linecap="round"><path d="M 120 180 L 120 130 L 150 100 L 180 130 L 180 180"/><path d="M 135 180 L 135 140 L 150 120 L 165 140 L 165 180"/></g><path d="M 150 82 A 5 5 0 0 1 150 92 A 6 6 0 1 0 150 80 Z" fill="%23ecfdf5"/><g fill="%23a7f3d0"><circle cx="150" cy="74" r="3"/><circle cx="132" cy="78" r="3"/><circle cx="168" cy="78" r="3"/><circle cx="116" cy="88" r="3"/><circle cx="184" cy="88" r="3"/><circle cx="104" cy="104" r="3"/><circle cx="196" cy="104" r="3"/><circle cx="98" cy="124" r="3"/><circle cx="202" cy="124" r="3"/></g><path id="arc-top" d="M 35 150 A 115 115 0 1 1 265 150" fill="none"/><path id="arc-bottom" d="M 265 150 A 115 115 0 0 1 35 150" fill="none"/><text fill="white" font-family="sans-serif" font-weight="900" font-size="14.5" letter-spacing="1"><textPath href="%23arc-top" startOffset="50%" text-anchor="middle">★ KELOMPOK KERJA GURU ★</textPath></text><text fill="white" font-family="sans-serif" font-weight="bold" font-size="16" x="150" y="52" text-anchor="middle">KKG PAI SD</text><text fill="white" font-family="sans-serif" font-weight="bold" font-size="11.5" x="150" y="215" text-anchor="middle">KECAMATAN CIMAHI SELATAN</text><text fill="white" font-family="sans-serif" font-weight="900" font-size="12" letter-spacing="0.5"><textPath href="%23arc-bottom" startOffset="50%" text-anchor="middle">PENDIDIKAN AGAMA ISLAM SEKOLAH DASAR</textPath></text></svg>`;
     document.getElementById('kkg-logo').src = logoSvg;
     document.getElementById('footer-logo').src = logoSvg;
 }
 
-// Tab switching
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
     const target = document.getElementById('sec-' + tabName);
@@ -26,10 +46,10 @@ function switchTab(tabName) {
     }
 
     document.getElementById('mobile-menu').classList.add('hidden');
+    document.getElementById('mobile-menu-btn').setAttribute('aria-expanded', 'false');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Toast
 function showToast(msg) {
     const toast = document.getElementById('toast');
     document.getElementById('toast-message').innerText = msg;
@@ -37,100 +57,65 @@ function showToast(msg) {
     setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3500);
 }
 
-// Statistik dihitung dari data anggota
-function updateStats() {
-    const gugus = new Set(dataAnggota.map(i => i.gugus));
-    const kelurahan = new Set(dataAnggota.map(i => i.kelurahan));
-    document.getElementById('stat-total-guru').innerText = dataAnggota.length;
-    document.getElementById('stat-total-gugus').innerText = gugus.size;
-    document.getElementById('stat-total-kelurahan').innerText = kelurahan.size;
-}
+// ---------- Beranda ----------
 
-// Data anggota
-async function loadAnggota() {
-    const { data, error } = await db.from('anggota').select('*').eq('disetujui', true).order('created_at', { ascending: false });
+async function loadRekap() {
+    const { data, error } = await db.rpc('rekap_beranda');
     if (error) {
         console.error(error);
-        showToast('Gagal memuat data anggota.');
         return;
     }
-    dataAnggota = data;
-    updateStats();
-    filterAnggota();
+    document.getElementById('stat-gpai').innerText = data.gpai;
+    document.getElementById('stat-kelurahan').innerText = data.kelurahan;
+    document.getElementById('stat-gugus').innerText = data.gugus;
+    document.getElementById('stat-sekolah').innerText = data.sekolah;
 }
 
-function badgeSertifikasi(nilai) {
-    return nilai === 'Sudah' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600';
-}
-
-function renderAnggota(items) {
-    const tbody = document.getElementById('table-body-anggota');
-    const mobile = document.getElementById('list-anggota-mobile');
-    tbody.innerHTML = '';
-    mobile.innerHTML = '';
-
-    if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Data anggota tidak ditemukan.</td></tr>`;
-        mobile.innerHTML = `<p class="bg-white rounded-2xl border border-slate-200 p-6 text-center text-sm text-slate-400">Data anggota tidak ditemukan.</p>`;
+// Kontak, profil, dan daftar gugus/kelurahan diatur pengurus di admin
+async function loadPengaturan() {
+    const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
+    if (error) {
+        console.error(error);
         return;
     }
+    document.getElementById('kontak-alamat').innerText = data.alamat;
+    document.getElementById('profil-teks').innerText = data.profil || 'Profil organisasi belum diisi pengurus.';
+    isiDaftar(data.daftar_kelurahan, data.daftar_gugus);
 
-    items.forEach((item, index) => {
-        let badgeColor = 'bg-slate-100 text-slate-800';
-        if (item.status === 'PNS') badgeColor = 'bg-emerald-100 text-emerald-800';
-        else if (item.status === 'PPPK') badgeColor = 'bg-blue-100 text-blue-800';
-        else if (item.status.includes('Non ASN')) badgeColor = 'bg-purple-100 text-purple-800';
-        else if (item.status === 'GTT' || item.status === 'GTY') badgeColor = 'bg-amber-100 text-amber-800';
-
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-slate-100 hover:bg-slate-50 transition';
-        tr.innerHTML = `
-            <td class="p-4 font-medium">${index + 1}</td>
-            <td class="p-4">
-                <div class="font-bold text-slate-800">${escapeHtml(item.nama)}</div>
-                <div class="text-xs text-slate-400">NIP/NUPTK: ${escapeHtml(item.nip)}</div>
-            </td>
-            <td class="p-4 font-medium text-slate-700">${escapeHtml(item.sekolah)}</td>
-            <td class="p-4">${escapeHtml(item.kelurahan)}</td>
-            <td class="p-4"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-semibold">${escapeHtml(item.gugus)}</span></td>
-            <td class="p-4"><span class="px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span></td>
-            <td class="p-4"><span class="px-2.5 py-1 ${badgeSertifikasi(item.sertifikasi)} rounded-full text-xs font-bold">${escapeHtml(item.sertifikasi)}</span></td>
-        `;
-        tbody.appendChild(tr);
-
-        const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4';
-        card.innerHTML = `
-            <div class="flex justify-between items-start gap-3">
-                <div class="min-w-0">
-                    <div class="font-bold text-slate-800 break-words">${escapeHtml(item.nama)}</div>
-                    <div class="text-xs text-slate-400 break-all">NIP/NUPTK: ${escapeHtml(item.nip)}</div>
-                </div>
-                <span class="shrink-0 px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span>
-            </div>
-            <div class="mt-3 text-sm text-slate-700 font-medium">${escapeHtml(item.sekolah)}</div>
-            <div class="mt-1 text-xs text-slate-500">${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)}</div>
-            <div class="mt-2"><span class="px-2.5 py-1 ${badgeSertifikasi(item.sertifikasi)} rounded-full text-xs font-bold">Sertifikasi: ${escapeHtml(item.sertifikasi)}</span></div>`;
-        mobile.appendChild(card);
+    if (data.email) {
+        const a = document.getElementById('kontak-email');
+        a.innerText = data.email;
+        a.href = 'mailto:' + data.email;
+        document.getElementById('baris-email').classList.remove('hidden');
+    }
+    if (data.telepon) {
+        const a = document.getElementById('kontak-telepon');
+        a.innerText = data.telepon;
+        a.href = 'tel:' + data.telepon.replace(/[^\d+]/g, '');
+        document.getElementById('baris-telepon').classList.remove('hidden');
+    }
+    ['facebook', 'youtube', 'instagram'].forEach(nama => {
+        if (!data[nama]) return;
+        const a = document.getElementById('sosmed-' + nama);
+        a.href = data[nama];
+        a.classList.remove('hidden');
+        a.classList.add('flex');
     });
 }
 
-function filterAnggota() {
-    const search = document.getElementById('search-input').value.toLowerCase();
-    const kelurahan = document.getElementById('filter-kelurahan').value;
-    const gugus = document.getElementById('filter-gugus').value;
-
-    const filtered = dataAnggota.filter(item => {
-        const matchSearch = item.nama.toLowerCase().includes(search) ||
-                            item.sekolah.toLowerCase().includes(search) ||
-                            item.nip.includes(search);
-        const matchKelurahan = kelurahan === '' || item.kelurahan === kelurahan;
-        const matchGugus = gugus === '' || item.gugus === gugus;
-        return matchSearch && matchKelurahan && matchGugus;
-    });
-
-    renderAnggota(filtered);
+function isiDaftar(kelurahan, gugus) {
+    const opsi = list => list.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    document.getElementById('add-kelurahan').innerHTML = opsi(kelurahan);
+    document.getElementById('add-gugus').innerHTML = opsi(gugus);
+    document.getElementById('pres-gugus').innerHTML = '<option value="">Pilih gugus</option>' + opsi(gugus);
+    document.getElementById('grid-kelurahan').innerHTML = kelurahan.map(k => `
+        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+            <h4 class="font-semibold text-sm">${escapeHtml(k)}</h4>
+        </div>`).join('');
 }
+
+// ---------- Pendaftaran anggota ----------
 
 function openModalTambahAnggota() {
     document.getElementById('modal-anggota').classList.remove('hidden');
@@ -160,10 +145,208 @@ async function submitAnggotaBaru(e) {
     }
     closeModalTambahAnggota();
     document.getElementById('form-tambah-anggota').reset();
-    showToast('Pendaftaran terkirim. Data tampil setelah disetujui pengurus.');
+    showToast('Pendaftaran terkirim. Data masuk setelah disetujui pengurus.');
 }
 
-// Aspirasi
+// ---------- Profil & pengurus ----------
+
+async function loadPengurus() {
+    const grid = document.getElementById('grid-pengurus');
+    const { data, error } = await db.from('pengurus').select('*').order('urutan').order('id');
+    if (error) {
+        console.error(error);
+        grid.innerHTML = pesanKosong('Gagal memuat susunan pengurus.');
+        return;
+    }
+    if (data.length === 0) {
+        grid.innerHTML = pesanKosong('Susunan pengurus belum diisi.');
+        return;
+    }
+    grid.innerHTML = data.map(item => {
+        const inisial = item.nama.trim().split(/\s+/).slice(0, 2).map(k => k[0]).join('').toUpperCase();
+        const foto = item.foto_path
+            ? `<img src="${escapeHtml(publicUrl('dokumentasi', item.foto_path))}" alt="${escapeHtml(item.nama)}" class="w-16 h-16 rounded-full object-cover shrink-0">`
+            : `<div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xl flex items-center justify-center shrink-0">${escapeHtml(inisial)}</div>`;
+        return `
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
+                ${foto}
+                <div class="min-w-0">
+                    <div class="font-bold text-slate-800 break-words">${escapeHtml(item.nama)}</div>
+                    <div class="text-sm text-emerald-700 font-medium">${escapeHtml(item.jabatan)}</div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ---------- Perangkat ajar ----------
+
+let dataPerangkat = [];
+
+async function loadPerangkat() {
+    const { data, error } = await db.from('perangkat_ajar').select('*').order('created_at', { ascending: false });
+    if (error) {
+        console.error(error);
+        document.getElementById('list-perangkat').innerHTML = pesanKosong('Gagal memuat perangkat ajar.');
+        return;
+    }
+    dataPerangkat = data;
+    renderPerangkat();
+}
+
+function renderPerangkat() {
+    const cari = document.getElementById('cari-perangkat').value.toLowerCase();
+    const jenis = document.getElementById('filter-jenis').value;
+    const list = document.getElementById('list-perangkat');
+
+    const hasil = dataPerangkat.filter(i =>
+        (jenis === '' || i.jenis === jenis) && i.judul.toLowerCase().includes(cari));
+
+    if (hasil.length === 0) {
+        list.innerHTML = pesanKosong(dataPerangkat.length === 0 ? 'Belum ada perangkat ajar.' : 'Perangkat ajar tidak ditemukan.');
+        return;
+    }
+    list.innerHTML = hasil.map(i => {
+        const href = i.url || publicUrl('perangkat-ajar', i.file_path);
+        return `
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col">
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">${escapeHtml(i.jenis)}</span>
+                    <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">Kelas ${escapeHtml(i.kelas)}</span>
+                </div>
+                <h3 class="font-bold text-slate-800 break-words">${escapeHtml(i.judul)}</h3>
+                <p class="text-sm text-slate-600 mt-2 flex-1">${escapeHtml(i.deskripsi || '')}</p>
+                <a href="${escapeHtml(href)}" target="_blank" rel="noopener" class="mt-4 h-11 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition">
+                    <i class="fa-solid ${i.url ? 'fa-arrow-up-right-from-square' : 'fa-download'} mr-2"></i>${i.url ? 'Buka Tautan' : 'Unduh Berkas'}
+                </a>
+            </div>`;
+    }).join('');
+}
+
+// ---------- Agenda & presensi ----------
+
+async function loadAgenda() {
+    const list = document.getElementById('agenda-list');
+    const { data, error } = await db.from('agenda').select('*').order('tanggal', { ascending: false });
+    if (error) {
+        console.error(error);
+        list.innerHTML = pesanKosong('Gagal memuat agenda.');
+        return;
+    }
+    if (data.length === 0) {
+        list.innerHTML = pesanKosong('Belum ada agenda kegiatan.');
+    } else {
+        const hari = hariIni();
+        const akan = data.filter(a => a.tanggal >= hari).reverse();
+        const lalu = data.filter(a => a.tanggal < hari);
+        list.innerHTML = [...akan, ...lalu].map(a => kartuAgenda(a, a.tanggal < hari)).join('');
+    }
+
+    // Kegiatan yang sedang membuka presensi
+    const buka = data.filter(a => a.presensi_buka);
+    const select = document.getElementById('pres-agenda');
+    select.innerHTML = buka.map(a => `<option value="${a.id}">${escapeHtml(a.judul)} (${tanggalIndo(a.tanggal, true)})</option>`).join('');
+    document.getElementById('form-presensi').classList.toggle('hidden', buka.length === 0);
+    document.getElementById('presensi-kosong').classList.toggle('hidden', buka.length > 0);
+}
+
+function kartuAgenda(a, lewat) {
+    const [tgl, bln] = tanggalIndo(a.tanggal, true).split(' ');
+    return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex gap-4 ${lewat ? 'opacity-60' : ''}">
+            <div class="w-14 shrink-0 text-center rounded-xl bg-emerald-50 text-emerald-800 py-2 self-start">
+                <div class="text-xl font-extrabold leading-none">${escapeHtml(tgl)}</div>
+                <div class="text-xs font-semibold uppercase mt-1">${escapeHtml(bln)}</div>
+            </div>
+            <div class="min-w-0 flex-1">
+                <span class="text-xs font-semibold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md">${escapeHtml(a.kategori)}</span>
+                <h4 class="font-bold text-slate-800 mt-2 break-words">${escapeHtml(a.judul)}</h4>
+                <p class="text-xs text-slate-500 mt-1"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(a.waktu || 'Waktu menyusul')} • <i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(a.lokasi)}</p>
+                ${a.deskripsi ? `<p class="text-sm text-slate-600 mt-2">${escapeHtml(a.deskripsi)}</p>` : ''}
+                ${a.presensi_buka ? `<button onclick="bukaPresensi(${a.id})" class="mt-3 h-11 px-4 rounded-xl bg-emerald-600 text-white text-sm font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i>Isi Presensi</button>` : ''}
+            </div>
+        </div>`;
+}
+
+function bukaPresensi(id) {
+    switchTab('presensi');
+    document.getElementById('pres-agenda').value = id;
+}
+
+async function handlePresensi(e) {
+    e.preventDefault();
+    const row = {
+        agenda_id: Number(document.getElementById('pres-agenda').value),
+        nama: document.getElementById('pres-nama').value.trim(),
+        sekolah: document.getElementById('pres-sekolah').value.trim(),
+        gugus: document.getElementById('pres-gugus').value
+    };
+
+    const { error } = await db.from('presensi').insert(row);
+    if (error) {
+        console.error(error);
+        if (error.code === '23505') showToast('Kamu sudah tercatat hadir di kegiatan ini.');
+        else if (error.code === '42501') showToast('Presensi untuk kegiatan ini sudah ditutup.');
+        else showToast('Gagal mengirim kehadiran.');
+        return;
+    }
+    document.getElementById('pres-nama').value = '';
+    document.getElementById('pres-sekolah').value = '';
+    document.getElementById('pres-gugus').value = '';
+    showToast('Kehadiran tercatat. Terima kasih!');
+}
+
+// ---------- Galeri & informasi ----------
+
+async function loadInformasi() {
+    const list = document.getElementById('info-list');
+    const { data, error } = await db.from('informasi').select('*').order('tanggal', { ascending: false }).order('id', { ascending: false }).limit(20);
+    if (error) {
+        console.error(error);
+        list.innerHTML = pesanKosong('Gagal memuat informasi.');
+        return;
+    }
+    if (data.length === 0) {
+        list.innerHTML = pesanKosong('Belum ada informasi.');
+        return;
+    }
+    list.innerHTML = data.map(i => `
+        <article class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${tanggalIndo(i.tanggal)}</p>
+            <h4 class="font-bold text-slate-800 mt-1 break-words">${escapeHtml(i.judul)}</h4>
+            <p class="text-sm text-slate-600 mt-2 whitespace-pre-line break-words">${escapeHtml(i.isi)}</p>
+        </article>`).join('');
+}
+
+async function loadDokumentasi() {
+    const grid = document.getElementById('galeri-grid');
+    const { data, error } = await db.from('dokumentasi').select('*').order('tanggal', { ascending: false });
+    if (error) {
+        console.error(error);
+        grid.innerHTML = pesanKosong('Gagal memuat dokumentasi.');
+        return;
+    }
+    if (data.length === 0) {
+        grid.innerHTML = pesanKosong('Belum ada dokumentasi.');
+        return;
+    }
+
+    grid.innerHTML = data.map(item => {
+        const src = item.foto_url || publicUrl('dokumentasi', item.foto_path);
+        return `
+            <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition">
+                <img src="${escapeHtml(src)}" alt="${escapeHtml(item.judul)}" loading="lazy" class="w-full h-48 object-cover">
+                <div class="p-5">
+                    <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">${escapeHtml(item.kategori)}</span>
+                    <h3 class="font-bold text-slate-800 mt-3 mb-2">${escapeHtml(item.judul)}</h3>
+                    <p class="text-xs text-slate-500 mb-3"><i class="fa-regular fa-calendar mr-1"></i> ${tanggalIndo(item.tanggal)} • ${escapeHtml(item.lokasi)}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(item.deskripsi || '')}</p>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ---------- Masukan & saran ----------
+
 async function handleAspirasi(e) {
     e.preventDefault();
     const form = document.getElementById('form-aspirasi');
@@ -178,99 +361,28 @@ async function handleAspirasi(e) {
     const { error } = await db.from('aspirasi').insert(row);
     if (error) {
         console.error(error);
-        showToast('Gagal mengirim aspirasi.');
+        showToast('Gagal mengirim masukan.');
         return;
     }
     form.reset();
-    showToast('Aspirasi Anda berhasil dikirim. Terima kasih!');
+    showToast('Masukan Anda berhasil dikirim. Terima kasih!');
 }
 
-// Galeri dokumentasi
-async function loadDokumentasi() {
-    const grid = document.getElementById('galeri-grid');
-    const { data, error } = await db.from('dokumentasi').select('*').order('tanggal', { ascending: false });
-    if (error) {
-        console.error(error);
-        grid.innerHTML = `<p class="col-span-3 text-center text-slate-400">Gagal memuat dokumentasi.</p>`;
-        return;
-    }
-    if (data.length === 0) {
-        grid.innerHTML = `<p class="col-span-3 text-center text-slate-400">Belum ada dokumentasi.</p>`;
-        return;
-    }
-
-    grid.innerHTML = data.map(item => {
-        const src = item.foto_url || db.storage.from(STORAGE_BUCKET).getPublicUrl(item.foto_path).data.publicUrl;
-        const tanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        return `
-            <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition">
-                <img src="${escapeHtml(src)}" alt="${escapeHtml(item.judul)}" class="w-full h-48 object-cover">
-                <div class="p-5">
-                    <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">${escapeHtml(item.kategori)}</span>
-                    <h3 class="font-bold text-slate-800 mt-3 mb-2">${escapeHtml(item.judul)}</h3>
-                    <p class="text-xs text-slate-500 mb-3"><i class="fa-regular fa-calendar mr-1"></i> ${tanggal} • ${escapeHtml(item.lokasi)}</p>
-                    <p class="text-sm text-slate-600">${escapeHtml(item.deskripsi || '')}</p>
-                </div>
-            </div>`;
-    }).join('');
-}
-
-// Kontak dan media sosial diatur pengurus di admin
-async function loadPengaturan() {
-    const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
-    if (error) {
-        console.error(error);
-        return;
-    }
-    document.getElementById('kontak-alamat').innerText = data.alamat;
-    isiDaftar(data.daftar_kelurahan, data.daftar_gugus);
-
-    if (data.email) {
-        const a = document.getElementById('kontak-email');
-        a.innerText = data.email;
-        a.href = 'mailto:' + data.email;
-        document.getElementById('baris-email').classList.remove('hidden');
-    }
-    if (data.telepon) {
-        const a = document.getElementById('kontak-telepon');
-        a.innerText = data.telepon;
-        a.href = 'tel:' + data.telepon.replace(/[^\d+]/g, '');
-        document.getElementById('baris-telepon').classList.remove('hidden');
-    }
-    ['facebook', 'youtube', 'instagram'].forEach(nama => {
-        if (!data[nama]) return;
-        const a = document.getElementById('sosmed-' + nama);
-        a.href = data[nama];
-        a.classList.remove('hidden');
-        a.classList.add('flex');
-    });
-}
-
-// Pilihan kelurahan dan gugus diambil dari pengaturan, bisa diubah di admin
-function isiDaftar(kelurahan, gugus) {
-    const opsi = list => list.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-    document.getElementById('filter-kelurahan').innerHTML = '<option value="">Semua Kelurahan</option>' + opsi(kelurahan);
-    document.getElementById('filter-gugus').innerHTML = '<option value="">Semua Gugus</option>' + opsi(gugus);
-    document.getElementById('add-kelurahan').innerHTML = opsi(kelurahan);
-    document.getElementById('add-gugus').innerHTML = opsi(gugus);
-    document.getElementById('grid-kelurahan').innerHTML = kelurahan.map(k => `
-        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
-            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
-            <h4 class="font-semibold text-sm">${escapeHtml(k)}</h4>
-        </div>`).join('');
-}
-
-function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+// ---------- Mulai ----------
 
 document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.toggle('hidden');
+    document.getElementById('mobile-menu-btn').setAttribute('aria-expanded', String(!menu.classList.contains('hidden')));
 });
 
 window.onload = function() {
     setupLogo();
-    loadAnggota();
-    loadDokumentasi();
+    loadRekap();
     loadPengaturan();
+    loadPengurus();
+    loadPerangkat();
+    loadAgenda();
+    loadInformasi();
+    loadDokumentasi();
 };
