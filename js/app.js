@@ -216,6 +216,7 @@ async function loadPengaturan() {
         return;
     }
     document.getElementById('kontak-alamat').innerText = data.alamat;
+    isiDaftar(data.daftar_kelurahan, data.daftar_gugus);
 
     if (data.email) {
         const a = document.getElementById('kontak-email');
@@ -236,6 +237,20 @@ async function loadPengaturan() {
         a.classList.remove('hidden');
         a.classList.add('flex');
     });
+}
+
+// Pilihan kelurahan dan gugus diambil dari pengaturan, bisa diubah di admin
+function isiDaftar(kelurahan, gugus) {
+    const opsi = list => list.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    document.getElementById('filter-kelurahan').innerHTML = '<option value="">Semua Kelurahan</option>' + opsi(kelurahan);
+    document.getElementById('filter-gugus').innerHTML = '<option value="">Semua Gugus</option>' + opsi(gugus);
+    document.getElementById('add-kelurahan').innerHTML = opsi(kelurahan);
+    document.getElementById('add-gugus').innerHTML = opsi(gugus);
+    document.getElementById('grid-kelurahan').innerHTML = kelurahan.map(k => `
+        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+            <h4 class="font-semibold text-sm">${escapeHtml(k)}</h4>
+        </div>`).join('');
 }
 
 function escapeHtml(value) {

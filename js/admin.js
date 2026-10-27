@@ -24,6 +24,7 @@ function showTab(name) {
 
 // Kontak & sosmed
 const KOLOM_KONTAK = ['alamat', 'email', 'telepon', 'facebook', 'youtube', 'instagram'];
+const KOLOM_DAFTAR = ['daftar_gugus', 'daftar_kelurahan'];
 
 async function loadKontak() {
     const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
@@ -32,12 +33,16 @@ async function loadKontak() {
         return;
     }
     KOLOM_KONTAK.forEach(k => { $('set-' + k).value = data[k]; });
+    KOLOM_DAFTAR.forEach(k => { $('set-' + k).value = data[k].join('\n'); });
 }
 
 $('form-kontak').addEventListener('submit', async e => {
     e.preventDefault();
     const row = { updated_at: new Date().toISOString() };
     KOLOM_KONTAK.forEach(k => { row[k] = $('set-' + k).value.trim(); });
+    KOLOM_DAFTAR.forEach(k => {
+        row[k] = [...new Set($('set-' + k).value.split('\n').map(v => v.trim()).filter(Boolean))];
+    });
 
     const status = $('kontak-status');
     status.classList.remove('hidden');
@@ -47,7 +52,7 @@ $('form-kontak').addEventListener('submit', async e => {
         status.innerText = 'Gagal menyimpan: ' + error.message;
         return;
     }
-    status.innerText = 'Kontak tersimpan.';
+    status.innerText = 'Pengaturan tersimpan.';
 });
 
 // Akun

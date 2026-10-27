@@ -23,8 +23,8 @@
         <section id="sec-login" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md mx-auto">
             <h2 class="font-bold text-lg mb-4">Masuk Pengurus</h2>
             <form id="form-login" class="space-y-4">
-                <input id="login-email" type="email" required placeholder="Email pengurus" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                <input id="login-password" type="password" required placeholder="Kata sandi" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                <input id="login-email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Email pengurus" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                <input id="login-password" type="password" required autocomplete="current-password" placeholder="Kata sandi" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Masuk</button>
                 <p id="login-error" class="text-sm text-red-600 hidden"></p>
                 <button type="button" id="btn-lupa" class="text-xs text-emerald-700 hover:underline">Lupa kata sandi?</button>
@@ -37,7 +37,7 @@
             <button data-tab="dokumentasi" class="admin-tab px-4 py-2 rounded-lg bg-emerald-600 text-white">Dokumentasi</button>
             <button data-tab="aspirasi" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Aspirasi</button>
             <button data-tab="anggota" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Anggota</button>
-            <button data-tab="kontak" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Kontak</button>
+            <button data-tab="kontak" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Pengaturan</button>
             <button data-tab="akun" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Akun</button>
         </nav>
 
@@ -89,7 +89,7 @@
         <!-- Kontak & Sosmed -->
         <div id="tab-kontak" class="admin-panel hidden">
             <section class="bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-xl">
-                <h2 class="font-bold text-lg mb-1">Kontak & Media Sosial</h2>
+                <h2 class="font-bold text-lg mb-1">Kontak, Media Sosial, Gugus & Kelurahan</h2>
                 <p class="text-xs text-slate-500 mb-4">Tampil di halaman Aspirasi & Kontak dan di footer. Kosongkan kolom yang tidak dipakai.</p>
                 <form id="form-kontak" class="space-y-4">
                     <label class="block text-xs font-semibold text-slate-700">Alamat
@@ -110,7 +110,13 @@
                     <label class="block text-xs font-semibold text-slate-700">Link Instagram
                         <input id="set-instagram" type="url" pattern="https://.*" placeholder="https://instagram.com/..." class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
                     </label>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Kontak</button>
+                    <label class="block text-xs font-semibold text-slate-700">Daftar Gugus (satu per baris)
+                        <textarea id="set-daftar_gugus" rows="9" required class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal"></textarea>
+                    </label>
+                    <label class="block text-xs font-semibold text-slate-700">Daftar Kelurahan (satu per baris)
+                        <textarea id="set-daftar_kelurahan" rows="5" required class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal"></textarea>
+                    </label>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Pengaturan</button>
                     <p id="kontak-status" class="text-sm text-slate-600 hidden"></p>
                 </form>
             </section>
