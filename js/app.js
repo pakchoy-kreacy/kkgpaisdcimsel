@@ -185,6 +185,69 @@ async function loadPengurus() {
     }).join('');
 }
 
+// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik) ----------
+
+let dataAnggota = [];
+
+async function loadAnggota() {
+    const { data, error } = await db.rpc('daftar_anggota_publik');
+    if (error) {
+        console.error(error);
+        document.getElementById('list-anggota').innerHTML = pesanKosong('Gagal memuat anggota.');
+        return;
+    }
+    dataAnggota = data;
+    const gugus = [...new Set(data.map(a => a.gugus))].sort();
+    document.getElementById('filter-gugus-anggota').innerHTML = '<option value="">Semua Gugus</option>' +
+        gugus.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+    renderAnggota();
+}
+
+function badgeStatus(status) {
+    if (status === 'PNS') return 'bg-emerald-100 text-emerald-800';
+    if (status === 'PPPK') return 'bg-blue-100 text-blue-800';
+    if (status.includes('Non ASN')) return 'bg-purple-100 text-purple-800';
+    return 'bg-amber-100 text-amber-800';
+}
+
+function badgeSertifikasi(nilai) {
+    return nilai === 'Sudah' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600';
+}
+
+function renderAnggota() {
+    const cari = document.getElementById('cari-anggota').value.toLowerCase();
+    const gugus = document.getElementById('filter-gugus-anggota').value;
+    const hasil = dataAnggota.filter(a =>
+        (gugus === '' || a.gugus === gugus) &&
+        (a.nama.toLowerCase().includes(cari) || a.sekolah.toLowerCase().includes(cari)));
+
+    document.getElementById('anggota-jumlah').innerText = `${hasil.length} anggota`;
+    const kosong = dataAnggota.length === 0 ? 'Belum ada anggota yang terdaftar.' : 'Anggota tidak ditemukan.';
+    const badge = (cls, teks) => `<span class="px-2.5 py-1 ${cls} rounded-full text-xs font-bold whitespace-nowrap">${escapeHtml(teks)}</span>`;
+
+    document.getElementById('list-anggota').innerHTML = hasil.length ? hasil.map(a => `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <div class="flex justify-between items-start gap-3">
+                <div class="font-bold text-slate-800 break-words min-w-0">${escapeHtml(a.nama)}</div>
+                ${badge(badgeStatus(a.status), a.status)}
+            </div>
+            <div class="mt-2 text-sm text-slate-700 font-medium">${escapeHtml(a.sekolah)}</div>
+            <div class="mt-1 text-xs text-slate-500">${escapeHtml(a.kelurahan)} • ${escapeHtml(a.gugus)}</div>
+            <div class="mt-2">${badge(badgeSertifikasi(a.sertifikasi), 'Sertifikasi: ' + a.sertifikasi)}</div>
+        </div>`).join('') : pesanKosong(kosong);
+
+    document.getElementById('tabel-anggota').innerHTML = hasil.length ? hasil.map((a, i) => `
+        <tr class="border-b border-slate-100">
+            <td class="p-4">${i + 1}</td>
+            <td class="p-4 font-bold text-slate-800">${escapeHtml(a.nama)}</td>
+            <td class="p-4">${escapeHtml(a.sekolah)}</td>
+            <td class="p-4">${escapeHtml(a.kelurahan)}</td>
+            <td class="p-4">${escapeHtml(a.gugus)}</td>
+            <td class="p-4">${badge(badgeStatus(a.status), a.status)}</td>
+            <td class="p-4">${badge(badgeSertifikasi(a.sertifikasi), a.sertifikasi)}</td>
+        </tr>`).join('') : `<tr><td colspan="7">${pesanKosong(kosong)}</td></tr>`;
+}
+
 // ---------- Perangkat ajar ----------
 
 let dataPerangkat = [];
@@ -458,6 +521,7 @@ window.onload = function() {
     loadRekap();
     loadPengaturan();
     loadPengurus();
+    loadAnggota();
     loadPerangkat();
     loadKarya();
     loadAgenda();
