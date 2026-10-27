@@ -229,6 +229,76 @@ function renderPerangkat() {
     }).join('');
 }
 
+// ---------- Karya inovasi digital ----------
+
+function idYoutube(url) {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
+    return m ? m[1] : null;
+}
+
+async function loadKarya() {
+    const list = document.getElementById('list-karya');
+    const { data, error } = await db.from('karya').select('*').eq('disetujui', true).order('created_at', { ascending: false });
+    if (error) {
+        console.error(error);
+        list.innerHTML = pesanKosong('Gagal memuat karya.');
+        return;
+    }
+    if (data.length === 0) {
+        list.innerHTML = pesanKosong('Belum ada karya. Jadilah yang pertama mengirim!');
+        return;
+    }
+    list.innerHTML = data.map(k => {
+        const yt = idYoutube(k.url);
+        const sampul = k.sampul_path ? publicUrl('dokumentasi', k.sampul_path) : (yt ? `https://img.youtube.com/vi/${yt}/hqdefault.jpg` : null);
+        const gambar = sampul
+            ? `<img src="${escapeHtml(sampul)}" alt="${escapeHtml(k.judul)}" loading="lazy" class="w-full h-44 object-cover">`
+            : `<div class="w-full h-44 bg-gradient-to-br from-indigo-500 to-emerald-600 flex items-center justify-center"><i class="fa-solid fa-lightbulb text-5xl text-white/80"></i></div>`;
+        return `
+            <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col">
+                ${gambar}
+                <div class="p-5 flex flex-col flex-1">
+                    <span class="self-start text-xs font-semibold px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-md">${escapeHtml(k.jenis)}</span>
+                    <h3 class="font-bold text-slate-800 mt-3 break-words">${escapeHtml(k.judul)}</h3>
+                    <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-user mr-1"></i>${escapeHtml(k.nama_guru)} • ${escapeHtml(k.sekolah)}</p>
+                    <p class="text-sm text-slate-600 mt-2 flex-1">${escapeHtml(k.deskripsi || '')}</p>
+                    <a href="${escapeHtml(k.url)}" target="_blank" rel="noopener" class="mt-4 h-11 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>Lihat Karya
+                    </a>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function openModalKarya() {
+    document.getElementById('modal-karya').classList.remove('hidden');
+}
+
+function closeModalKarya() {
+    document.getElementById('modal-karya').classList.add('hidden');
+}
+
+async function submitKarya(e) {
+    e.preventDefault();
+    const row = {
+        judul: document.getElementById('kr-judul').value.trim(),
+        nama_guru: document.getElementById('kr-nama').value.trim(),
+        sekolah: document.getElementById('kr-sekolah').value.trim(),
+        jenis: document.getElementById('kr-jenis').value,
+        url: document.getElementById('kr-url').value.trim(),
+        deskripsi: document.getElementById('kr-deskripsi').value.trim() || null
+    };
+    const { error } = await db.from('karya').insert(row);
+    if (error) {
+        console.error(error);
+        showToast('Gagal mengirim karya. Periksa tautannya (harus diawali https://).');
+        return;
+    }
+    closeModalKarya();
+    document.getElementById('form-karya').reset();
+    showToast('Karya terkirim. Tampil setelah diperiksa pengurus.');
+}
+
 // ---------- Agenda & presensi ----------
 
 async function loadAgenda() {
@@ -389,6 +459,7 @@ window.onload = function() {
     loadPengaturan();
     loadPengurus();
     loadPerangkat();
+    loadKarya();
     loadAgenda();
     loadInformasi();
     loadDokumentasi();

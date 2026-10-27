@@ -18,7 +18,7 @@ function tgl(iso) {
 
 const JUDUL = {
     dokumentasi: 'Galeri', informasi: 'Informasi', agenda: 'Agenda', presensi: 'Rekap Presensi',
-    perangkat: 'Perangkat Ajar', pengurus: 'Pengurus', anggota: 'Anggota', aspirasi: 'Masukan',
+    perangkat: 'Perangkat Ajar', karya: 'Karya Inovasi', pengurus: 'Pengurus', anggota: 'Anggota', aspirasi: 'Masukan',
     pengaturan: 'Pengaturan', akun: 'Akun'
 };
 let panelAktif = null;
@@ -345,6 +345,61 @@ $('form-perangkat').addEventListener('submit', e => {
             throw err;
         }
         muatPerangkat();
+    });
+});
+
+// ---------- Karya inovasi digital ----------
+
+daftarMuat.karya = buatDaftar('list-karya', {
+    // kiriman guru yang menunggu persetujuan tampil paling atas
+    muat: async () => (await cek(db.from('karya').select('*').order('created_at', { ascending: false }), 'Gagal memuat.'))
+        .sort((a, b) => a.disetujui - b.disetujui),
+    kosong: 'Belum ada karya.',
+    baris: r => `
+        <div class="flex items-center gap-3">
+            <div class="min-w-0 flex-1">
+                <div class="font-semibold break-words">${esc(r.judul)}
+                    ${r.disetujui ? '' : '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">Menunggu</span>'}
+                </div>
+                <div class="text-xs text-slate-500">${esc(r.nama_guru)} • ${esc(r.sekolah)} • ${esc(r.jenis)}</div>
+                <a href="${esc(r.url)}" target="_blank" rel="noopener" class="inline-flex items-center h-9 text-xs text-emerald-700 underline break-all">Periksa tautan</a>
+                ${r.deskripsi ? `<p class="text-xs text-slate-600 break-words">${esc(r.deskripsi)}</p>` : ''}
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+                ${r.disetujui ? '' : '<button data-act="setujui" class="h-11 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold">Setujui</button>'}
+                ${tombolHapus}
+            </div>
+        </div>`,
+    aksi: {
+        setujui: async r => cek(db.from('karya').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'),
+        hapus: async r => {
+            if (!confirm(`Hapus karya "${r.judul}"?`)) return false;
+            await hapusBerkas('dokumentasi', r.sampul_path);
+            await cek(db.from('karya').delete().eq('id', r.id), 'Gagal menghapus.');
+        }
+    },
+    setelahMuat: data => {
+        const menunggu = data.filter(r => !r.disetujui).length;
+        $('karya-total').innerText = data.length ? `(${data.length}${menunggu ? `, ${menunggu} menunggu` : ''})` : '';
+    }
+});
+
+$('form-karya').addEventListener('submit', e => {
+    e.preventDefault();
+    kirim(e.target, async () => {
+        const file = $('kr-sampul').files[0];
+        const path = file ? await unggah('dokumentasi', file, 'karya/', 3, true) : null;
+        try {
+            await cek(db.from('karya').insert({
+                judul: $('kr-judul').value.trim(), nama_guru: $('kr-nama').value.trim(), sekolah: $('kr-sekolah').value.trim(),
+                jenis: $('kr-jenis').value, url: $('kr-url').value.trim(), deskripsi: $('kr-deskripsi').value.trim() || null,
+                sampul_path: path, disetujui: true
+            }), 'Gagal menyimpan.');
+        } catch (err) {
+            await hapusBerkas('dokumentasi', path);
+            throw err;
+        }
+        daftarMuat.karya();
     });
 });
 
