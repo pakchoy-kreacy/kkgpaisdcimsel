@@ -53,6 +53,7 @@ function showApp(loggedIn) {
 }
 
 async function init() {
+    if (location.hash.includes('type=recovery')) return; // ditangani oleh PASSWORD_RECOVERY
     const { data } = await db.auth.getSession();
     showApp(!!data.session);
 }
@@ -71,6 +72,35 @@ $('form-login').addEventListener('submit', async e => {
         return;
     }
     showApp(true);
+});
+
+// Lupa kata sandi: kirim tautan reset ke email, lalu buka tab Akun saat kembali lewat tautan
+$('btn-lupa').addEventListener('click', async () => {
+    const email = $('login-email').value;
+    const status = $('lupa-status');
+    status.classList.remove('hidden');
+    if (!email) {
+        status.innerText = 'Isi email pengurus dulu di kolom di atas.';
+        return;
+    }
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: location.origin + location.pathname
+    });
+    if (error) {
+        console.error(error);
+        status.innerText = 'Gagal mengirim email: ' + error.message;
+        return;
+    }
+    status.innerText = 'Jika email terdaftar, tautan reset kata sandi sudah dikirim. Cek kotak masuk atau spam.';
+});
+
+db.auth.onAuthStateChange(event => {
+    if (event === 'PASSWORD_RECOVERY') {
+        showApp(true);
+        showTab('akun');
+        $('pw-status').classList.remove('hidden');
+        $('pw-status').innerText = 'Silakan isi kata sandi baru.';
+    }
 });
 
 $('btn-logout').addEventListener('click', async () => {
