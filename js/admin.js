@@ -551,6 +551,7 @@ async function gantiLogo(btn, pathBaru) {
 }
 
 $('btn-logo-simpan').addEventListener('click', async e => {
+    const btn = e.currentTarget; // simpan sebelum await; setelahnya currentTarget bernilai null
     const file = $('logo-file').files[0];
     if (!file) {
         $('logo-status').className = 'text-sm text-center text-red-600';
@@ -565,7 +566,7 @@ $('btn-logo-simpan').addEventListener('click', async e => {
         $('logo-status').innerText = err.message;
         return;
     }
-    gantiLogo(e.currentTarget, path);
+    gantiLogo(btn, path);
 });
 
 $('btn-logo-reset').addEventListener('click', e => {
