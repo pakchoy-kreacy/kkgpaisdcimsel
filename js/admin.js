@@ -2,27 +2,37 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
 
-function show(section) {
-    ['sec-login', 'sec-upload', 'sec-list'].forEach(id => $(id).classList.toggle('hidden', id !== section && !(section === 'app' && id !== 'sec-login')));
-    $('btn-logout').classList.toggle('hidden', section === 'sec-login');
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function showTab(name) {
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + name));
+    document.querySelectorAll('.admin-tab').forEach(b => {
+        const active = b.dataset.tab === name;
+        b.classList.toggle('bg-emerald-600', active);
+        b.classList.toggle('text-white', active);
+        b.classList.toggle('bg-white', !active);
+        b.classList.toggle('text-slate-600', !active);
+    });
+    if (name === 'dokumentasi') loadDokumentasi();
+    if (name === 'aspirasi') loadAspirasi();
+    if (name === 'anggota') loadAnggota();
+}
+
+function showApp(loggedIn) {
+    $('sec-login').classList.toggle('hidden', loggedIn);
+    $('admin-tabs').classList.toggle('hidden', !loggedIn);
+    $('btn-logout').classList.toggle('hidden', !loggedIn);
+    if (loggedIn) showTab('dokumentasi');
 }
 
 async function init() {
     const { data } = await db.auth.getSession();
-    if (data.session) {
-        showApp();
-    } else {
-        show('sec-login');
-    }
+    showApp(!!data.session);
 }
 
-function showApp() {
-    $('sec-login').classList.add('hidden');
-    $('sec-upload').classList.remove('hidden');
-    $('sec-list').classList.remove('hidden');
-    $('btn-logout').classList.remove('hidden');
-    loadList();
-}
+document.querySelectorAll('.admin-tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
 $('form-login').addEventListener('submit', async e => {
     e.preventDefault();
@@ -35,7 +45,7 @@ $('form-login').addEventListener('submit', async e => {
         $('login-error').classList.remove('hidden');
         return;
     }
-    showApp();
+    showApp(true);
 });
 
 $('btn-logout').addEventListener('click', async () => {
@@ -43,6 +53,7 @@ $('btn-logout').addEventListener('click', async () => {
     location.reload();
 });
 
+// Dokumentasi
 $('form-upload').addEventListener('submit', async e => {
     e.preventDefault();
     const file = $('up-foto').files[0];
@@ -80,10 +91,10 @@ $('form-upload').addEventListener('submit', async e => {
 
     status.innerText = 'Dokumentasi berhasil disimpan.';
     $('form-upload').reset();
-    loadList();
+    loadDokumentasi();
 });
 
-async function loadList() {
+async function loadDokumentasi() {
     const { data, error } = await db.from('dokumentasi').select('*').order('tanggal', { ascending: false });
     const list = $('list-dokumentasi');
     list.innerHTML = '';
@@ -96,16 +107,16 @@ async function loadList() {
         li.className = 'py-3 flex justify-between items-center gap-4';
         li.innerHTML = `
             <div>
-                <div class="font-semibold">${item.judul}</div>
-                <div class="text-xs text-slate-500">${item.kategori} • ${item.tanggal} • ${item.lokasi}</div>
+                <div class="font-semibold">${escapeHtml(item.judul)}</div>
+                <div class="text-xs text-slate-500">${escapeHtml(item.kategori)} • ${item.tanggal} • ${escapeHtml(item.lokasi)}</div>
             </div>
             <button class="text-red-600 hover:underline text-xs">Hapus</button>`;
-        li.querySelector('button').addEventListener('click', () => removeItem(item));
+        li.querySelector('button').addEventListener('click', () => removeDokumentasi(item));
         list.appendChild(li);
     });
 }
 
-async function removeItem(item) {
+async function removeDokumentasi(item) {
     if (!confirm(`Hapus dokumentasi "${item.judul}"?`)) return;
     if (item.foto_path) {
         await db.storage.from(STORAGE_BUCKET).remove([item.foto_path]);
@@ -115,7 +126,82 @@ async function removeItem(item) {
         alert('Gagal menghapus.');
         return;
     }
-    loadList();
+    loadDokumentasi();
+}
+
+// Aspirasi
+async function loadAspirasi() {
+    const { data, error } = await db.from('aspirasi').select('*').order('created_at', { ascending: false });
+    const list = $('list-aspirasi');
+    list.innerHTML = '';
+    if (error) {
+        list.innerHTML = '<li class="py-3 text-red-600">Gagal memuat aspirasi.</li>';
+        return;
+    }
+    if (data.length === 0) {
+        list.innerHTML = '<li class="py-3 text-slate-400">Belum ada aspirasi.</li>';
+        return;
+    }
+    data.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'py-3 space-y-1';
+        li.innerHTML = `
+            <div class="flex justify-between items-center gap-4">
+                <div class="font-semibold">${escapeHtml(item.nama)} <span class="font-normal text-slate-500">— ${escapeHtml(item.sekolah)}</span></div>
+                <button class="text-red-600 hover:underline text-xs">Hapus</button>
+            </div>
+            <div class="text-xs text-emerald-700">${escapeHtml(item.kategori)} • ${new Date(item.created_at).toLocaleString('id-ID')}</div>
+            <p class="text-slate-700">${escapeHtml(item.pesan)}</p>`;
+        li.querySelector('button').addEventListener('click', () => removeAspirasi(item));
+        list.appendChild(li);
+    });
+}
+
+async function removeAspirasi(item) {
+    if (!confirm('Hapus aspirasi ini?')) return;
+    const { error } = await db.from('aspirasi').delete().eq('id', item.id);
+    if (error) {
+        alert('Gagal menghapus.');
+        return;
+    }
+    loadAspirasi();
+}
+
+// Anggota
+async function loadAnggota() {
+    const { data, error } = await db.from('anggota').select('*').order('created_at', { ascending: false });
+    const list = $('list-anggota');
+    list.innerHTML = '';
+    if (error) {
+        list.innerHTML = '<li class="py-3 text-red-600">Gagal memuat anggota.</li>';
+        return;
+    }
+    if (data.length === 0) {
+        list.innerHTML = '<li class="py-3 text-slate-400">Belum ada anggota.</li>';
+        return;
+    }
+    data.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'py-3 flex justify-between items-center gap-4';
+        li.innerHTML = `
+            <div>
+                <div class="font-semibold">${escapeHtml(item.nama)}</div>
+                <div class="text-xs text-slate-500">${escapeHtml(item.sekolah)} • ${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)} • ${escapeHtml(item.status)}</div>
+            </div>
+            <button class="text-red-600 hover:underline text-xs">Hapus</button>`;
+        li.querySelector('button').addEventListener('click', () => removeAnggota(item));
+        list.appendChild(li);
+    });
+}
+
+async function removeAnggota(item) {
+    if (!confirm(`Hapus data anggota "${item.nama}"?`)) return;
+    const { error } = await db.from('anggota').delete().eq('id', item.id);
+    if (error) {
+        alert('Gagal menghapus.');
+        return;
+    }
+    loadAnggota();
 }
 
 init();

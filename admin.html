@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dokumentasi - KKG PAI SD</title>
+    <title>Admin - KKG PAI SD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,15 +12,15 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen">
     <header class="bg-white border-b border-emerald-100 px-4 py-4 flex justify-between items-center">
         <div>
-            <h1 class="font-bold text-emerald-900">Admin Dokumentasi KKG PAI SD</h1>
+            <h1 class="font-bold text-emerald-900">Admin KKG PAI SD</h1>
             <a href="index.html" class="text-xs text-emerald-600 hover:underline">← Kembali ke portal</a>
         </div>
         <button id="btn-logout" class="hidden text-sm text-slate-600 hover:text-red-600">Keluar</button>
     </header>
 
-    <main class="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
         <!-- Login -->
-        <section id="sec-login" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200">
+        <section id="sec-login" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md mx-auto">
             <h2 class="font-bold text-lg mb-4">Masuk Pengurus</h2>
             <form id="form-login" class="space-y-4">
                 <input id="login-email" type="email" required placeholder="Email pengurus" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
@@ -30,34 +30,57 @@
             </form>
         </section>
 
-        <!-- Upload -->
-        <section id="sec-upload" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200">
-            <h2 class="font-bold text-lg mb-4">Tambah Dokumentasi</h2>
-            <form id="form-upload" class="space-y-4">
-                <input id="up-judul" required placeholder="Judul kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="up-kategori" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white">
-                        <option>Kreatif</option>
-                        <option>Edukatif</option>
-                        <option>Religius</option>
-                        <option>Empati</option>
-                        <option>Nalar Digital</option>
-                    </select>
-                    <input id="up-tanggal" type="date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                </div>
-                <input id="up-lokasi" required placeholder="Lokasi kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                <textarea id="up-deskripsi" rows="3" placeholder="Deskripsi singkat" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
-                <input id="up-foto" type="file" accept="image/jpeg,image/png" required class="w-full text-sm">
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Dokumentasi</button>
-                <p id="up-status" class="text-sm text-slate-600 hidden"></p>
-            </form>
-        </section>
+        <!-- Tabs -->
+        <nav id="admin-tabs" class="hidden flex gap-2 text-sm font-medium">
+            <button data-tab="dokumentasi" class="admin-tab px-4 py-2 rounded-lg bg-emerald-600 text-white">Dokumentasi</button>
+            <button data-tab="aspirasi" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Aspirasi</button>
+            <button data-tab="anggota" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Anggota</button>
+        </nav>
 
-        <!-- Daftar -->
-        <section id="sec-list" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200">
-            <h2 class="font-bold text-lg mb-4">Daftar Dokumentasi</h2>
-            <ul id="list-dokumentasi" class="divide-y divide-slate-100 text-sm"></ul>
-        </section>
+        <!-- Dokumentasi -->
+        <div id="tab-dokumentasi" class="admin-panel hidden space-y-6">
+            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
+                <h2 class="font-bold text-lg mb-4">Tambah Dokumentasi</h2>
+                <form id="form-upload" class="space-y-4">
+                    <input id="up-judul" required placeholder="Judul kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="up-kategori" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white">
+                            <option>Kreatif</option>
+                            <option>Edukatif</option>
+                            <option>Religius</option>
+                            <option>Empati</option>
+                            <option>Nalar Digital</option>
+                        </select>
+                        <input id="up-tanggal" type="date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    </div>
+                    <input id="up-lokasi" required placeholder="Lokasi kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    <textarea id="up-deskripsi" rows="3" placeholder="Deskripsi singkat" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
+                    <input id="up-foto" type="file" accept="image/jpeg,image/png" required class="w-full text-sm">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Dokumentasi</button>
+                    <p id="up-status" class="text-sm text-slate-600 hidden"></p>
+                </form>
+            </section>
+            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
+                <h2 class="font-bold text-lg mb-4">Daftar Dokumentasi</h2>
+                <ul id="list-dokumentasi" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <!-- Aspirasi -->
+        <div id="tab-aspirasi" class="admin-panel hidden">
+            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
+                <h2 class="font-bold text-lg mb-4">Aspirasi Masuk</h2>
+                <ul id="list-aspirasi" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
+
+        <!-- Anggota -->
+        <div id="tab-anggota" class="admin-panel hidden">
+            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200">
+                <h2 class="font-bold text-lg mb-4">Data Anggota</h2>
+                <ul id="list-anggota" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
+        </div>
     </main>
 
     <script src="js/config.js"></script>
