@@ -140,7 +140,8 @@ $('form-upload').addEventListener('submit', async e => {
     });
     if (error) {
         console.error(error);
-        status.innerText = 'Foto terunggah, tapi data gagal disimpan.';
+        await db.storage.from(STORAGE_BUCKET).remove([path]);
+        status.innerText = 'Gagal menyimpan data dokumentasi. Foto tidak disimpan.';
         return;
     }
 
@@ -235,18 +236,36 @@ async function loadAnggota() {
         list.innerHTML = '<li class="py-3 text-slate-400">Belum ada anggota.</li>';
         return;
     }
+    // Yang menunggu persetujuan ditampilkan paling atas
+    data.sort((a, b) => a.disetujui - b.disetujui);
     data.forEach(item => {
         const li = document.createElement('li');
         li.className = 'py-3 flex justify-between items-center gap-4';
         li.innerHTML = `
-            <div>
-                <div class="font-semibold">${escapeHtml(item.nama)}</div>
+            <div class="min-w-0">
+                <div class="font-semibold break-words">${escapeHtml(item.nama)}
+                    ${item.disetujui ? '' : '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">Menunggu</span>'}
+                </div>
                 <div class="text-xs text-slate-500">${escapeHtml(item.sekolah)} • ${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)} • ${escapeHtml(item.status)}</div>
             </div>
-            <button class="text-red-600 hover:underline text-xs">Hapus</button>`;
-        li.querySelector('button').addEventListener('click', () => removeAnggota(item));
+            <div class="flex gap-2 shrink-0">
+                ${item.disetujui ? '' : '<button data-act="setujui" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold">Setujui</button>'}
+                <button data-act="hapus" class="px-3 py-2 rounded-lg text-red-600 border border-red-200 text-xs">Hapus</button>
+            </div>`;
+        li.querySelector('[data-act="hapus"]').addEventListener('click', () => removeAnggota(item));
+        const btnSetujui = li.querySelector('[data-act="setujui"]');
+        if (btnSetujui) btnSetujui.addEventListener('click', () => approveAnggota(item));
         list.appendChild(li);
     });
+}
+
+async function approveAnggota(item) {
+    const { error } = await db.from('anggota').update({ disetujui: true }).eq('id', item.id);
+    if (error) {
+        alert('Gagal menyetujui.');
+        return;
+    }
+    loadAnggota();
 }
 
 async function removeAnggota(item) {

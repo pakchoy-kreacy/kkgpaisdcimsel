@@ -48,7 +48,7 @@ function updateStats() {
 
 // Data anggota
 async function loadAnggota() {
-    const { data, error } = await db.from('anggota').select('*').order('created_at', { ascending: false });
+    const { data, error } = await db.from('anggota').select('*').eq('disetujui', true).order('created_at', { ascending: false });
     if (error) {
         console.error(error);
         showToast('Gagal memuat data anggota.');
@@ -153,8 +153,7 @@ async function submitAnggotaBaru(e) {
     }
     closeModalTambahAnggota();
     document.getElementById('form-tambah-anggota').reset();
-    showToast('Anggota baru berhasil ditambahkan!');
-    loadAnggota();
+    showToast('Pendaftaran terkirim. Data tampil setelah disetujui pengurus.');
 }
 
 // Aspirasi
