@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKG PAI SD Kecamatan Cimahi Selatan - Portal Resmi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <!-- Font Inter & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#16a34a',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .hero-bg {
+            background: linear-gradient(135deg, rgba(4, 120, 87, 0.92) 0%, rgba(6, 78, 59, 0.95) 100%), 
+                        url('https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1600&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased leading-relaxed">
+
+    <!-- NAVIGATION BAR -->
+    <header class="sticky top-0 z-50 bg-white shadow-md border-b border-emerald-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo & Brand Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="relative w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-emerald-600 to-amber-400 shadow-md">
+                        <img id="kkg-logo" src="" alt="Logo KKG PAI SD" class="w-full h-full object-cover rounded-full bg-white">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-emerald-900 tracking-tight leading-tight">KKG PAI SD</h1>
+                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Kec. Cimahi Selatan</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Menu -->
+                <nav class="hidden md:flex space-x-1 lg:space-x-2 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-2 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition">
+                        <i class="fa-solid fa-house mr-1.5"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('visimisi')" id="nav-visimisi" class="nav-btn px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition">
+                        <i class="fa-solid fa-bullseye mr-1.5"></i> Visi Misi KEREN
+                    </button>
+                    <button onclick="switchTab('program')" id="nav-program" class="nav-btn px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition">
+                        <i class="fa-solid fa-list-check mr-1.5"></i> Program Kerja
+                    </button>
+                    <button onclick="switchTab('anggota')" id="nav-anggota" class="nav-btn px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition">
+                        <i class="fa-solid fa-users mr-1.5"></i> Data Anggota
+                    </button>
+                    <button onclick="switchTab('dokumentasi')" id="nav-dokumentasi" class="nav-btn px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition">
+                        <i class="fa-solid fa-camera-retro mr-1.5"></i> Dokumentasi
+                    </button>
+                    <button onclick="switchTab('kontak')" id="nav-kontak" class="nav-btn px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition">
+                        <i class="fa-solid fa-comments mr-1.5"></i> Aspirasi & Kontak
+                    </button>
+                </nav>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="p-2 rounded-md text-emerald-700 hover:bg-emerald-50 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-emerald-100 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('dashboard')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Dashboard</button>
+            <button onclick="switchTab('visimisi')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Visi, Misi & Tujuan</button>
+            <button onclick="switchTab('program')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Program Kerja</button>
+            <button onclick="switchTab('anggota')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Data Anggota</button>
+            <button onclick="switchTab('dokumentasi')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Dokumentasi</button>
+            <button onclick="switchTab('kontak')" class="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">Aspirasi & Kontak</button>
+        </div>
+    </header>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-800 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <i class="fa-solid fa-circle-check text-amber-400 text-lg"></i>
+        <span id="toast-message" class="text-sm font-medium">Pesan berhasil dikirim!</span>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="min-h-screen">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="sec-dashboard" class="tab-content">
+            <!-- Hero Banner -->
+            <div class="hero-bg text-white py-16 md:py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+                <div class="max-w-5xl mx-auto text-center relative z-10">
+                    <span class="inline-block bg-amber-400/20 text-amber-300 border border-amber-300/30 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase mb-6 backdrop-blur-md">
+                        <i class="fa-solid fa-star text-amber-400 mr-1.5"></i> Portal Resmi Guru PAI SD
+                    </span>
+                    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+                        KKG PAI SD Kecamatan Cimahi Selatan
+                    </h1>
+                    <p class="text-lg sm:text-xl text-emerald-100 max-w-3xl mx-auto mb-8 font-light">
+                        Terwujudnya Guru PAI SD Kecamatan Cimahi Selatan yang <span class="font-bold text-amber-300 underline decoration-amber-400">KEREN</span> (Kreatif, Edukatif, Religius, Empati dan Nalar Digital) dalam menghadapi perkembangan zaman.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button onclick="switchTab('visimisi')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center">
+                            Pelajari Visi & Misi <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                        <button onclick="openModalTambahAnggota()" class="bg-white/10 hover:bg-white/20 text-white font-semibold border border-white/30 px-6 py-3.5 rounded-xl backdrop-blur-md transition flex items-center">
+                            <i class="fa-solid fa-user-plus mr-2"></i> Daftar Anggota Baru
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rekapitulasi & Statistik Card Section -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <!-- Stat 1 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-100 text-center transform hover:-translate-y-1 transition duration-300">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-user-graduate text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-extrabold text-slate-800 mb-1" id="stat-total-guru">94</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Total Guru PAI</p>
+                    </div>
+                    <!-- Stat 2 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-100 text-center transform hover:-translate-y-1 transition duration-300">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-school text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-extrabold text-slate-800 mb-1" id="stat-total-gugus">9</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Gugus Sekolah</p>
+                    </div>
+                    <!-- Stat 3 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-100 text-center transform hover:-translate-y-1 transition duration-300">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-map-location-dot text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-extrabold text-slate-800 mb-1" id="stat-total-kelurahan">5</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Kelurahan Binaan</p>
+                    </div>
+                    <!-- Stat 4 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-100 text-center transform hover:-translate-y-1 transition duration-300">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-award text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-extrabold text-slate-800 mb-1">5</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Pilar KEREN</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nilai-Nilai Utama KEREN -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Nilai Utama KKG PAI "KEREN"</h2>
+                    <p class="text-slate-600">Landasan dan semangat kerja Guru Pendidikan Agama Islam Sekolah Dasar di Kecamatan Cimahi Selatan.</p>
+                </div>
+
+                <div class="grid md:grid-cols-5 gap-4">
+                    <!-- K -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition text-center">
+                        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mx-auto mb-3 text-lg shadow-md">K</div>
+                        <h4 class="font-bold text-slate-800 mb-2">Kreatif</h4>
+                        <p class="text-xs text-slate-600">Inovasi metode & media pembelajaran yang kontemporer.</p>
+                    </div>
+                    <!-- E -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition text-center">
+                        <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center mx-auto mb-3 text-lg shadow-md">E</div>
+                        <h4 class="font-bold text-slate-800 mb-2">Edukatif</h4>
+                        <p class="text-xs text-slate-600">Peningkatan kompetensi pedagogik & keilmuan berkelanjutan.</p>
+                    </div>
+                    <!-- R -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition text-center">
+                        <div class="w-10 h-10 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center mx-auto mb-3 text-lg shadow-md">R</div>
+                        <h4 class="font-bold text-slate-800 mb-2">Religius</h4>
+                        <p class="text-xs text-slate-600">Menanamkan nilai Islam melalui keteladanan yang konsisten.</p>
+                    </div>
+                    <!-- E -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition text-center">
+                        <div class="w-10 h-10 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center mx-auto mb-3 text-lg shadow-md">E</div>
+                        <h4 class="font-bold text-slate-800 mb-2">Empati</h4>
+                        <p class="text-xs text-slate-600">Kepedulian dan iklim kebersamaan yang harmonis.</p>
+                    </div>
+                    <!-- N -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition text-center">
+                        <div class="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center mx-auto mb-3 text-lg shadow-md">N</div>
+                        <h4 class="font-bold text-slate-800 mb-2">Nalar Digital</h4>
+                        <p class="text-xs text-slate-600">Pemanfaatan teknologi secara bijak, aman, dan produktif.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wilayah Kelurahan Cimahi Selatan -->
+            <div class="bg-emerald-900 text-white py-12 px-4">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Cakupan Kelurahan Cimahi Selatan</h3>
+                            <p class="text-emerald-200 text-sm">Cimahi Selatan terdiri dari 5 kelurahan aktif tempat berabdinya para Guru PAI.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+                            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+                            <h4 class="font-semibold text-sm">Cibeber</h4>
+                        </div>
+                        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+                            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+                            <h4 class="font-semibold text-sm">Cibeureum</h4>
+                        </div>
+                        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+                            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+                            <h4 class="font-semibold text-sm">Leuwigajah</h4>
+                        </div>
+                        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+                            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+                            <h4 class="font-semibold text-sm">Melong</h4>
+                        </div>
+                        <div class="bg-emerald-800/60 p-4 rounded-xl border border-emerald-700 text-center">
+                            <i class="fa-solid fa-building-columns text-amber-400 mb-2 text-xl"></i>
+                            <h4 class="font-semibold text-sm">Utama</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: VISI, MISI & TUJUAN -->
+        <section id="sec-visimisi" class="tab-content hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Landasan Organisasi</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-1 mb-4">Visi, Misi & Tujuan KKG PAI SD</h2>
+                <div class="w-20 h-1 bg-amber-400 mx-auto rounded-full"></div>
+            </div>
+
+            <!-- Visi Box -->
+            <div class="bg-gradient-to-r from-emerald-800 to-emerald-900 text-white p-8 rounded-3xl shadow-xl mb-12 text-center relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10">
+                    <i class="fa-solid fa-quote-right text-9xl"></i>
+                </div>
+                <h3 class="text-amber-300 font-bold uppercase tracking-wider mb-2 text-sm">Visi Utama</h3>
+                <p class="text-xl md:text-2xl font-semibold max-w-4xl mx-auto leading-relaxed italic">
+                    "Terwujudnya Guru PAI SD Kecamatan Cimahi Selatan yang <span class="text-amber-400 font-bold">KEREN</span> (Kreatif, Edukatif, Religius, Empati dan Nalar Digital) dalam menghadapi perkembangan zaman."
+                </p>
+            </div>
+
+            <!-- Misi & Tujuan Section Grid -->
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Misi Card -->
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-md">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">Misi Organisasi</h3>
+                            <p class="text-xs text-slate-500">Langkah strategis mencapai visi KEREN</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-6">
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">K</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">K — Kreatif</h4>
+                                <p class="text-sm text-slate-600">Mendorong inovasi dan pengembangan metode, media, serta komunitas belajar PAI yang kreatif dan kontekstual.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">E</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">E — Edukatif</h4>
+                                <p class="text-sm text-slate-600">Meningkatkan kompetensi pedagogik, profesional, dan keilmuan PAI secara berkelanjutan melalui kolaborasi dan pelatihan.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-amber-500 text-white font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">R</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">R — Religius</h4>
+                                <p class="text-sm text-slate-600">Menanamkan nilai-nilai Islam dalam kehidupan sehari-hari dengan keteladanan dan pembiasaan yang konsisten.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-rose-500 text-white font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">E</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">E — Empati</h4>
+                                <p class="text-sm text-slate-600">Membangun kepedulian, solidaritas, dan lingkungan kerja yang harmonis antar guru, peserta didik, dan masyarakat.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">N</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">N — Nalar Digital</h4>
+                                <p class="text-sm text-slate-600">Menguasai dan memanfaatkan teknologi digital secara bijak, aman, dan produktif dalam pembelajaran dan administrasi.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tujuan Card -->
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-md">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">Tujuan Strategis</h3>
+                            <p class="text-xs text-slate-500">Target terukur keberhasilan program</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-6">
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">1</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">K — Inovasi Pembelajaran</h4>
+                                <p class="text-sm text-slate-600">Terwujudnya peningkatan inovasi pembelajaran PAI yang menarik dan relevan dengan kebutuhan zaman.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">2</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">E — Peningkatan Kualifikasi</h4>
+                                <p class="text-sm text-slate-600">Meningkatnya kualitas Guru PAI melalui penguatan kompetensi dan akses pembelajaran digital.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">3</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">R — Budaya Islamic</h4>
+                                <p class="text-sm text-slate-600">Terbentuknya budaya religius di sekolah dan lingkungan masyarakat.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-800 font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">4</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">E — Harmonisasi Sosial</h4>
+                                <p class="text-sm text-slate-600">Terwujudnya hubungan sosial yang harmonis, saling mendukung, dan peduli antaranggota KKG.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-800 font-bold flex-shrink-0 flex items-center justify-center mr-4 text-sm mt-0.5">5</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800">N — Literasi Teknologi</h4>
+                                <p class="text-sm text-slate-600">Meningkatnya literasi digital dan pemanfaatan teknologi dalam mendukung program KKG PAI.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: PROGRAM KERJA -->
+        <section id="sec-program" class="tab-content hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Aksi & Agenda</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-1 mb-4">Program Kerja Berdasarkan Visi KEREN</h2>
+                <p class="text-slate-600">Program unggulan KKG PAI SD Cimahi Selatan yang dirancang terstruktur.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Program K -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-lg">K</span>
+                        <h3 class="font-bold text-slate-800">Program Kreatif</h3>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mr-2 mt-1"></i> Workshop Pembuatan Media Pembelajaran Interaktif (Canva & Quizizz PAI)</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mr-2 mt-1"></i> Lomba Inovasi Modul Ajar Kurikulum Merdeka PAI</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mr-2 mt-1"></i> Komunitas Belajar (Kombel) Guru Kreatif PAI Cimahi Selatan</li>
+                    </ul>
+                </div>
+
+                <!-- Program E (Edukatif) -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-lg">E</span>
+                        <h3 class="font-bold text-slate-800">Program Edukatif</h3>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mr-2 mt-1"></i> Pelatihan Rutin Pendalaman Keilmuan & Fiqih Pembelajaran</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mr-2 mt-1"></i> Pendampingan Penyusunan Asesmen & Soal PAI</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mr-2 mt-1"></i> Bimbingan Teknis Pengembangan Karir & PMM (Platform Merdeka Mengajar)</li>
+                    </ul>
+                </div>
+
+                <!-- Program R -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="w-10 h-10 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-center text-lg">R</span>
+                        <h3 class="font-bold text-slate-800">Program Religius</h3>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-amber-500 mr-2 mt-1"></i> Pengajian Bulanan & Kajian Tematik Guru PAI</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-amber-500 mr-2 mt-1"></i> Peringatan Hari Besar Islam (PHBI) Tingkat Kecamatan</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-amber-500 mr-2 mt-1"></i> Pembiasaan Tahsin & Tahfidz Al-Qur'an Rutin Anggota</li>
+                    </ul>
+                </div>
+
+                <!-- Program E (Empati) -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="w-10 h-10 rounded-xl bg-rose-500 text-white font-bold flex items-center justify-center text-lg">E</span>
+                        <h3 class="font-bold text-slate-800">Program Empati</h3>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-rose-500 mr-2 mt-1"></i> Program Duka & Peduli Anggota KKG (Bantuan Sosial)</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-rose-500 mr-2 mt-1"></i> Silaturahmi & Anjangsana Tokoh Pendidikan PAI Cimahi</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-rose-500 mr-2 mt-1"></i> Bakti Sosial PAI untuk Siswa Kurang Mampu</li>
+                    </ul>
+                </div>
+
+                <!-- Program N -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-lg">N</span>
+                        <h3 class="font-bold text-slate-800">Program Nalar Digital</h3>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-start"><i class="fa-solid fa-check text-indigo-500 mr-2 mt-1"></i> Pengelolaan AppsScript & Google Workspace untuk Administrasi KKG</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-indigo-500 mr-2 mt-1"></i> Edukasi Etika Digital & Literasi Keamanan Siber Guru & Siswa</li>
+                        <li class="flex items-start"><i class="fa-solid fa-check text-indigo-500 mr-2 mt-1"></i> Digitalisasi Repository RPP & Modul PAI Online</li>
+                    </ul>
+                </div>
+
+                <!-- Banner Informasi Tambahan -->
+                <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-2xl p-6 text-white flex flex-col justify-between">
+                    <div>
+                        <span class="bg-amber-400 text-slate-900 font-bold text-xs px-2.5 py-1 rounded-full uppercase">Agenda Rutin</span>
+                        <h4 class="font-bold text-lg mt-3">Pertemuan KKG Bulanan</h4>
+                        <p class="text-xs text-emerald-100 mt-2">Setiap Hari Rabu Minggu Pertama setiap bulan secara gilir antar Gugus SD Cimahi Selatan.</p>
+                    </div>
+                    <button onclick="switchTab('kontak')" class="mt-4 bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-bold py-2.5 px-4 rounded-xl transition text-center">
+                        Usulkan Agenda Baru
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: DATA ANGGOTA -->
+        <section id="sec-anggota" class="tab-content hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-slate-900">Data Anggota Guru PAI SD</h2>
+                    <p class="text-slate-600 text-sm">Daftar Guru Pendidikan Agama Islam se-Kecamatan Cimahi Selatan</p>
+                </div>
+                <button onclick="openModalTambahAnggota()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition flex items-center justify-center">
+                    <i class="fa-solid fa-plus mr-2"></i> Tambah Anggota Baru
+                </button>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                    <input type="text" id="search-input" onkeyup="filterAnggota()" placeholder="Cari Nama Guru, NIP, atau Sekolah..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div class="w-full md:w-48">
+                    <select id="filter-kelurahan" onchange="filterAnggota()" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
+                        <option value="">Semua Kelurahan</option>
+                        <option value="Cibeber">Cibeber</option>
+                        <option value="Cibeureum">Cibeureum</option>
+                        <option value="Leuwigajah">Leuwigajah</option>
+                        <option value="Melong">Melong</option>
+                        <option value="Utama">Utama</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <select id="filter-gugus" onchange="filterAnggota()" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
+                        <option value="">Semua Gugus</option>
+                        <option value="Gugus 1">Gugus 1</option>
+                        <option value="Gugus 2">Gugus 2</option>
+                        <option value="Gugus 3">Gugus 3</option>
+                        <option value="Gugus 4">Gugus 4</option>
+                        <option value="Gugus 5">Gugus 5</option>
+                        <option value="Gugus 6">Gugus 6</option>
+                        <option value="Gugus 7">Gugus 7</option>
+                        <option value="Gugus 8">Gugus 8</option>
+                        <option value="Gugus 9">Gugus 9</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table Data Anggota -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-4">No</th>
+                                <th class="p-4">Nama Lengkap & NIP</th>
+                                <th class="p-4">Unit Kerja (Sekolah)</th>
+                                <th class="p-4">Kelurahan</th>
+                                <th class="p-4">Gugus</th>
+                                <th class="p-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body-anggota">
+                            <!-- Rows loaded by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: DOKUMENTASI -->
+        <section id="sec-dokumentasi" class="tab-content hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Galeri & Jejak Kegiatan</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-1 mb-4">Dokumentasi Kegiatan KKG</h2>
+                <p class="text-slate-600">Merekam jejak kebersamaan dan karya inovatif Guru PAI Cimahi Selatan.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition">
+                    <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=800&auto=format&fit=crop" alt="Workshop Digital" class="w-full h-48 object-cover">
+                    <div class="p-5">
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-md">Nalar Digital</span>
+                        <h3 class="font-bold text-slate-800 mt-3 mb-2">Workshop Pembuatan Modul Digital PAI</h3>
+                        <p class="text-xs text-slate-500 mb-3"><i class="fa-regular fa-calendar mr-1"></i> 14 Oktober 2026 • SD Negeri Utama 1</p>
+                        <p class="text-sm text-slate-600">Pelatihan integrasi Canva dan AppsScript untuk efisiensi modul ajar PAI Kurikulum Merdeka.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition">
+                    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop" alt="Kajian & Silaturahmi" class="w-full h-48 object-cover">
+                    <div class="p-5">
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-md">Religius</span>
+                        <h3 class="font-bold text-slate-800 mt-3 mb-2">Kajian Rutin & Silaturahmi Guru PAI</h3>
+                        <p class="text-xs text-slate-500 mb-3"><i class="fa-regular fa-calendar mr-1"></i> 02 September 2026 • Masjid Agung Cimahi</p>
+                        <p class="text-sm text-slate-600">Penguatan spiritualitas dan pendalaman pemahaman fiqih kontemporer bagi seluruh anggota.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition">
+                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop" alt="Lomba Inovasi" class="w-full h-48 object-cover">
+                    <div class="p-5">
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">Kreatif</span>
+                        <h3 class="font-bold text-slate-800 mt-3 mb-2">Gelar Karya & Media Pembelajaran PAI</h3>
+                        <p class="text-xs text-slate-500 mb-3"><i class="fa-regular fa-calendar mr-1"></i> 18 Agustus 2026 • Gedung KKG Cimahi</p>
+                        <p class="text-sm text-slate-600">Pameran alat peraga interaktif karya Guru PAI SD se-Kecamatan Cimahi Selatan.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: ASPIRASI & KONTAK -->
+        <section id="sec-kontak" class="tab-content hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- Left: Form Aspirasi -->
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-lg">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-2">Aspirasi & Masukan Guru</h2>
+                    <p class="text-slate-600 text-sm mb-6">Sampaikan saran, aspirasi, atau usulan program untuk kemajuan KKG PAI SD Cimahi Selatan.</p>
+
+                    <form id="form-aspirasi" onsubmit="handleAspirasi(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Lengkap</label>
+                            <input type="text" required placeholder="Masukkan Nama Lengkap" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Asal Sekolah SD</label>
+                            <input type="text" required placeholder="Contoh: SDN Cibeber 1" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kategori Aspirasi</label>
+                            <select class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm bg-white">
+                                <option>Usulan Program Kerja</option>
+                                <option>Pelatihan / Workshop</option>
+                                <option>Saran & Kritik Organisasi</option>
+                                <option>Lainnya</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Pesan Aspirasi</label>
+                            <textarea rows="4" required placeholder="Tuliskan masukan atau usulan Anda..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+                            <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Aspirasi
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right: Contact Info & Secretary -->
+                <div class="flex flex-col justify-between space-y-6">
+                    <div class="bg-gradient-to-br from-emerald-900 to-emerald-800 text-white p-8 rounded-3xl shadow-lg">
+                        <h3 class="text-xl font-bold mb-4">Informasi Sekretariat KKG</h3>
+                        <div class="space-y-4 text-sm text-emerald-100">
+                            <div class="flex items-start space-x-3">
+                                <i class="fa-solid fa-location-dot text-amber-400 text-lg mt-1"></i>
+                                <span>Kecamatan Cimahi Selatan, Kota Cimahi, Jawa Barat</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-solid fa-envelope text-amber-400 text-lg"></i>
+                                <span>kkgpaisd.cimahi.selatan@gmail.com</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-solid fa-phone text-amber-400 text-lg"></i>
+                                <span>+62 812-3456-7890 (Sekretariat KKG)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-200 p-6 rounded-3xl">
+                        <h4 class="font-bold text-emerald-900 mb-2">Integrasi Google Apps Script</h4>
+                        <p class="text-xs text-emerald-700 leading-relaxed">
+                            Aplikasi web ini dirancang agar dapat terhubung langsung dengan **Google Sheets via Apps Script**. Semua data pendaftaran anggota dan formulir aspirasi dapat tersimpan otomatis di Google Drive pengurus.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL TAMBAH ANGGOTA BARU -->
+    <div id="modal-anggota" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModalTambahAnggota()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">Formulir Anggota Baru</h3>
+            <p class="text-xs text-slate-500 mb-6">Tambahkan data Guru PAI SD Kecamatan Cimahi Selatan</p>
+
+            <form id="form-tambah-anggota" onsubmit="submitAnggotaBaru(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Lengkap (dengan Gelar)</label>
+                    <input type="text" id="add-nama" required placeholder="Contoh: Ahmad Fauzi, S.Pd.I" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">NIP / NUPTK</label>
+                    <input type="text" id="add-nip" placeholder="Contoh: 19850101..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama SD / Sekolah Basecamp</label>
+                    <input type="text" id="add-sekolah" required placeholder="Contoh: SDN Melong 2" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kelurahan</label>
+                        <select id="add-kelurahan" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="Cibeber">Cibeber</option>
+                            <option value="Cibeureum">Cibeureum</option>
+                            <option value="Leuwigajah">Leuwigajah</option>
+                            <option value="Melong">Melong</option>
+                            <option value="Utama">Utama</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Gugus</label>
+                        <select id="add-gugus" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="Gugus 1">Gugus 1</option>
+                            <option value="Gugus 2">Gugus 2</option>
+                            <option value="Gugus 3">Gugus 3</option>
+                            <option value="Gugus 4">Gugus 4</option>
+                            <option value="Gugus 5">Gugus 5</option>
+                            <option value="Gugus 6">Gugus 6</option>
+                            <option value="Gugus 7">Gugus 7</option>
+                            <option value="Gugus 8">Gugus 8</option>
+                            <option value="Gugus 9">Gugus 9</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Status Kepegawaian</label>
+                    <select id="add-status" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="PNS">PNS</option>
+                        <option value="PPPK">PPPK</option>
+                        <option value="Non ASN Sekolah Negeri">Non ASN Sekolah Negeri</option>
+                        <option value="Non ASN Sekolah Swasta">Non ASN Sekolah Swasta</option>
+                        <option value="GTT">GTT (Guru Tidak Tetap)</option>
+                        <option value="GTY">GTY (Guru Tetap Yayasan)</option>
+                    </select>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition">
+                        Simpan Data Anggota
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER WITH TAGLINE -->
+    <footer class="bg-slate-900 text-white pt-12 pb-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center pb-8 border-b border-slate-800 gap-6">
+                <!-- Footer Brand -->
+                <div class="flex items-center space-x-3 text-center md:text-left">
+                    <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-emerald-500 to-amber-400">
+                        <img id="footer-logo" src="" alt="Logo KKG" class="w-full h-full object-cover rounded-full bg-white">
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-white">KKG PAI SD Kecamatan Cimahi Selatan</h3>
+                        <p class="text-xs text-slate-400">Kota Cimahi, Jawa Barat</p>
+                    </div>
+                </div>
+
+                <!-- Tagline Highlight Box -->
+                <div class="bg-slate-800/80 border border-slate-700 px-6 py-4 rounded-2xl text-center md:text-right max-w-lg">
+                    <p class="text-amber-400 font-bold text-sm tracking-wide mb-1">“KEREN dalam program, Nyata dalam pengabdian.”</p>
+                    <p class="text-xs text-slate-400 font-medium">Kreatif • Edukatif • Religius • Empati • Nalar Digital</p>
+                </div>
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-3">
+                <p>&copy; 2026 KKG PAI SD Kecamatan Cimahi Selatan. All rights reserved.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-emerald-400"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="hover:text-emerald-400"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" class="hover:text-emerald-400"><i class="fa-brands fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Konfigurasi Supabase (publishable key aman di browser, dijaga oleh RLS)
+        const SUPABASE_URL = 'https://xomekijmdzfdfqimycjl.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_b9iztDvtg-sC-elLpyGs0g_7IC5M9Ip';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Data anggota dimuat dari tabel anggota
+        let dataAnggota = [];
+
+        async function loadAnggota() {
+            const { data, error } = await db.from('anggota').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.error(error);
+                showToast('Gagal memuat data anggota.');
+                return;
+            }
+            dataAnggota = data;
+            filterAnggota();
+        }
+
+        // Draw Attached SVG Logo Fallback (matches uploaded circular logo)
+        function setupLogo() {
+            const logoSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><circle cx="150" cy="150" r="146" fill="%23047857" stroke="%23000" stroke-width="5"/><circle cx="150" cy="150" r="122" fill="%2310b981" stroke="%23064e3b" stroke-width="4"/><g fill="none" stroke="%23f59e0b" stroke-width="8" stroke-linecap="round"><path d="M 120 180 L 120 130 L 150 100 L 180 130 L 180 180"/><path d="M 135 180 L 135 140 L 150 120 L 165 140 L 165 180"/></g><path d="M 150 82 A 5 5 0 0 1 150 92 A 6 6 0 1 0 150 80 Z" fill="%23ecfdf5"/><g fill="%23a7f3d0"><circle cx="150" cy="74" r="3"/><circle cx="132" cy="78" r="3"/><circle cx="168" cy="78" r="3"/><circle cx="116" cy="88" r="3"/><circle cx="184" cy="88" r="3"/><circle cx="104" cy="104" r="3"/><circle cx="196" cy="104" r="3"/><circle cx="98" cy="124" r="3"/><circle cx="202" cy="124" r="3"/></g><path id="arc-top" d="M 35 150 A 115 115 0 1 1 265 150" fill="none"/><path id="arc-bottom" d="M 265 150 A 115 115 0 0 1 35 150" fill="none"/><text fill="white" font-family="sans-serif" font-weight="900" font-size="14.5" letter-spacing="1"><textPath href="%23arc-top" startOffset="50%" text-anchor="middle">★ KELOMPOK KERJA GURU ★</textPath></text><text fill="white" font-family="sans-serif" font-weight="bold" font-size="16" x="150" y="52" text-anchor="middle">KKG PAI SD</text><text fill="white" font-family="sans-serif" font-weight="bold" font-size="11.5" x="150" y="215" text-anchor="middle">KECAMATAN CIMAHI SELATAN</text><text fill="white" font-family="sans-serif" font-weight="900" font-size="12" letter-spacing="0.5"><textPath href="%23arc-bottom" startOffset="50%" text-anchor="middle">PENDIDIKAN AGAMA ISLAM SEKOLAH DASAR</textPath></text></svg>`;
+            document.getElementById('kkg-logo').src = logoSvg;
+            document.getElementById('footer-logo').src = logoSvg;
+        }
+
+        // Tab Switching Function
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+
+            const target = document.getElementById('sec-' + tabName);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+
+            // Update Active Nav Styling
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                btn.classList.remove('text-emerald-700', 'bg-emerald-50');
+                btn.classList.add('text-slate-600');
+            });
+
+            const activeBtn = document.getElementById('nav-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('text-emerald-700', 'bg-emerald-50');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            // Close Mobile Menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Render Anggota Table
+        function renderAnggota(items) {
+            const tbody = document.getElementById('table-body-anggota');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Data anggota tidak ditemukan.</td></tr>`;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                let badgeColor = 'bg-slate-100 text-slate-800';
+                if (item.status === 'PNS') badgeColor = 'bg-emerald-100 text-emerald-800';
+                else if (item.status === 'PPPK') badgeColor = 'bg-blue-100 text-blue-800';
+                else if (item.status.includes('Non ASN')) badgeColor = 'bg-purple-100 text-purple-800';
+                else if (item.status === 'GTT' || item.status === 'GTY') badgeColor = 'bg-amber-100 text-amber-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-4 font-medium">${index + 1}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800">${item.nama}</div>
+                        <div class="text-xs text-slate-400">NIP/NUPTK: ${item.nip}</div>
+                    </td>
+                    <td class="p-4 font-medium text-slate-700">${item.sekolah}</td>
+                    <td class="p-4">${item.kelurahan}</td>
+                    <td class="p-4"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-semibold">${item.gugus}</span></td>
+                    <td class="p-4"><span class="px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${item.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update stats counter
+            document.getElementById('stat-total-guru').innerText = "94";
+            document.getElementById('stat-total-gugus').innerText = "9";
+        }
+
+        // Filter Function for Data Anggota
+        function filterAnggota() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const kelurahan = document.getElementById('filter-kelurahan').value;
+            const gugus = document.getElementById('filter-gugus').value;
+
+            const filtered = dataAnggota.filter(item => {
+                const matchSearch = item.nama.toLowerCase().includes(search) || 
+                                    item.sekolah.toLowerCase().includes(search) || 
+                                    item.nip.includes(search);
+                const matchKelurahan = kelurahan === '' || item.kelurahan === kelurahan;
+                const matchGugus = gugus === '' || item.gugus === gugus;
+                return matchSearch && matchKelurahan && matchGugus;
+            });
+
+            renderAnggota(filtered);
+        }
+
+        // Modal Controls
+        function openModalTambahAnggota() {
+            document.getElementById('modal-anggota').classList.remove('hidden');
+        }
+
+        function closeModalTambahAnggota() {
+            document.getElementById('modal-anggota').classList.add('hidden');
+        }
+
+        // Handle Form Submit New Anggota
+        async function submitAnggotaBaru(e) {
+            e.preventDefault();
+            const row = {
+                nama: document.getElementById('add-nama').value,
+                nip: document.getElementById('add-nip').value || '-',
+                sekolah: document.getElementById('add-sekolah').value,
+                kelurahan: document.getElementById('add-kelurahan').value,
+                gugus: document.getElementById('add-gugus').value,
+                status: document.getElementById('add-status').value
+            };
+
+            const { error } = await db.from('anggota').insert(row);
+            if (error) {
+                console.error(error);
+                showToast('Gagal menyimpan data anggota.');
+                return;
+            }
+            closeModalTambahAnggota();
+            document.getElementById('form-tambah-anggota').reset();
+            showToast('Anggota baru berhasil ditambahkan!');
+            loadAnggota();
+        }
+
+        // Handle Aspirasi Submit
+        async function handleAspirasi(e) {
+            e.preventDefault();
+            const form = document.getElementById('form-aspirasi');
+            const fields = form.querySelectorAll('input, select, textarea');
+            const row = {
+                nama: fields[0].value,
+                sekolah: fields[1].value,
+                kategori: fields[2].value,
+                pesan: fields[3].value
+            };
+
+            const { error } = await db.from('aspirasi').insert(row);
+            if (error) {
+                console.error(error);
+                showToast('Gagal mengirim aspirasi.');
+                return;
+            }
+            form.reset();
+            showToast('Aspirasi Anda berhasil dikirim. Terima kasih!');
+        }
+
+        // Toast Notification Function
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Mobile Menu Toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Initialize App
+        window.onload = function() {
+            setupLogo();
+            loadAnggota();
+        };
+    </script>
+</body>
+</html>
