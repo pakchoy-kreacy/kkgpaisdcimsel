@@ -208,6 +208,36 @@ async function loadDokumentasi() {
     }).join('');
 }
 
+// Kontak dan media sosial diatur pengurus di admin
+async function loadPengaturan() {
+    const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
+    if (error) {
+        console.error(error);
+        return;
+    }
+    document.getElementById('kontak-alamat').innerText = data.alamat;
+
+    if (data.email) {
+        const a = document.getElementById('kontak-email');
+        a.innerText = data.email;
+        a.href = 'mailto:' + data.email;
+        document.getElementById('baris-email').classList.remove('hidden');
+    }
+    if (data.telepon) {
+        const a = document.getElementById('kontak-telepon');
+        a.innerText = data.telepon;
+        a.href = 'tel:' + data.telepon.replace(/[^\d+]/g, '');
+        document.getElementById('baris-telepon').classList.remove('hidden');
+    }
+    ['facebook', 'youtube', 'instagram'].forEach(nama => {
+        if (!data[nama]) return;
+        const a = document.getElementById('sosmed-' + nama);
+        a.href = data[nama];
+        a.classList.remove('hidden');
+        a.classList.add('flex');
+    });
+}
+
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -220,4 +250,5 @@ window.onload = function() {
     setupLogo();
     loadAnggota();
     loadDokumentasi();
+    loadPengaturan();
 };

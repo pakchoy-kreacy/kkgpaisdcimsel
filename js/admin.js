@@ -19,7 +19,36 @@ function showTab(name) {
     if (name === 'aspirasi') loadAspirasi();
     if (name === 'anggota') loadAnggota();
     if (name === 'akun') loadAkun();
+    if (name === 'kontak') loadKontak();
 }
+
+// Kontak & sosmed
+const KOLOM_KONTAK = ['alamat', 'email', 'telepon', 'facebook', 'youtube', 'instagram'];
+
+async function loadKontak() {
+    const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
+    if (error) {
+        console.error(error);
+        return;
+    }
+    KOLOM_KONTAK.forEach(k => { $('set-' + k).value = data[k]; });
+}
+
+$('form-kontak').addEventListener('submit', async e => {
+    e.preventDefault();
+    const row = { updated_at: new Date().toISOString() };
+    KOLOM_KONTAK.forEach(k => { row[k] = $('set-' + k).value.trim(); });
+
+    const status = $('kontak-status');
+    status.classList.remove('hidden');
+    const { error } = await db.from('pengaturan').update(row).eq('id', 1);
+    if (error) {
+        console.error(error);
+        status.innerText = 'Gagal menyimpan: ' + error.message;
+        return;
+    }
+    status.innerText = 'Kontak tersimpan.';
+});
 
 // Akun
 async function loadAkun() {
