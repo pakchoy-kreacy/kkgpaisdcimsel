@@ -1,0 +1,11 @@
+.glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.hero-bg {
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.92) 0%, rgba(6, 78, 59, 0.95) 100%),
+                url('https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1600&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+}
