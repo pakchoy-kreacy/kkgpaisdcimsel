@@ -322,7 +322,11 @@ const muatPerangkat = buatDaftar('list-perangkat', {
         }
     }
 });
-daftarMuat.perangkat = muatPerangkat;
+daftarMuat.perangkat = async () => {
+    const { data } = await db.from('pengaturan').select('daftar_jenis_perangkat').eq('id', 1).single();
+    if (data) $('pa-jenis').innerHTML = data.daftar_jenis_perangkat.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    muatPerangkat();
+};
 
 $('form-perangkat').addEventListener('submit', e => {
     e.preventDefault();
@@ -456,14 +460,63 @@ daftarMuat.aspirasi = buatDaftar('list-aspirasi', {
 // ---------- Pengaturan ----------
 
 const KOLOM_TEKS = ['profil', 'alamat', 'email', 'telepon', 'facebook', 'youtube', 'instagram'];
-const KOLOM_DAFTAR = ['daftar_gugus', 'daftar_kelurahan'];
+const KOLOM_DAFTAR = ['daftar_gugus', 'daftar_kelurahan', 'daftar_jenis_perangkat'];
 
 daftarMuat.pengaturan = async () => {
     const { data, error } = await db.from('pengaturan').select('*').eq('id', 1).single();
     if (error) return console.error(error);
     KOLOM_TEKS.forEach(k => { $('set-' + k).value = data[k]; });
     KOLOM_DAFTAR.forEach(k => { $('set-' + k).value = data[k].join('\n'); });
+    logoSekarang = data.logo_path;
+    $('logo-preview').src = data.logo_path ? urlPublik('dokumentasi', data.logo_path) : DEFAULT_LOGO;
 };
+
+// Logo: diunggah langsung, terpisah dari tombol Simpan Pengaturan
+let logoSekarang = null;
+
+async function gantiLogo(btn, pathBaru) {
+    const status = $('logo-status');
+    btn.disabled = true;
+    status.className = 'text-sm text-center text-slate-600';
+    status.innerText = 'Menyimpan...';
+    try {
+        await cek(db.from('pengaturan').update({ logo_path: pathBaru }).eq('id', 1), 'Gagal menyimpan logo.');
+        await hapusBerkas('dokumentasi', logoSekarang);
+        logoSekarang = pathBaru;
+        $('logo-preview').src = pathBaru ? urlPublik('dokumentasi', pathBaru) : DEFAULT_LOGO;
+        $('logo-file').value = '';
+        status.innerText = 'Logo tersimpan. Muat ulang portal untuk melihatnya.';
+    } catch (err) {
+        await hapusBerkas('dokumentasi', pathBaru);
+        status.className = 'text-sm text-center text-red-600';
+        status.innerText = err.message;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+$('btn-logo-simpan').addEventListener('click', async e => {
+    const file = $('logo-file').files[0];
+    if (!file) {
+        $('logo-status').className = 'text-sm text-center text-red-600';
+        $('logo-status').innerText = 'Pilih berkas logo dulu.';
+        return;
+    }
+    let path;
+    try {
+        path = await unggah('dokumentasi', file, 'logo/', 2, true);
+    } catch (err) {
+        $('logo-status').className = 'text-sm text-center text-red-600';
+        $('logo-status').innerText = err.message;
+        return;
+    }
+    gantiLogo(e.currentTarget, path);
+});
+
+$('btn-logo-reset').addEventListener('click', e => {
+    if (!logoSekarang) return;
+    if (confirm('Kembalikan ke logo bawaan?')) gantiLogo(e.currentTarget, null);
+});
 
 $('form-pengaturan').addEventListener('submit', e => {
     e.preventDefault();
