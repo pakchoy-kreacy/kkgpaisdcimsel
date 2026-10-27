@@ -529,6 +529,16 @@ daftarMuat.pengaturan = async () => {
 // Logo: diunggah langsung, terpisah dari tombol Simpan Pengaturan
 let logoSekarang = null;
 
+// Hapus semua berkas di folder logo/ selain logo yang sedang dipakai
+async function bersihkanLogoLama(pathDipakai) {
+    const { data, error } = await db.storage.from('dokumentasi').list('logo', { limit: 1000 });
+    if (error) return console.error(error);
+    const lama = data.map(f => 'logo/' + f.name).filter(p => p !== pathDipakai);
+    for (let i = 0; i < lama.length; i += 100) {
+        await db.storage.from('dokumentasi').remove(lama.slice(i, i + 100));
+    }
+}
+
 async function gantiLogo(btn, pathBaru) {
     const status = $('logo-status');
     btn.disabled = true;
@@ -536,7 +546,7 @@ async function gantiLogo(btn, pathBaru) {
     status.innerText = 'Menyimpan...';
     try {
         await cek(db.from('pengaturan').update({ logo_path: pathBaru }).eq('id', 1), 'Gagal menyimpan logo.');
-        await hapusBerkas('dokumentasi', logoSekarang);
+        await bersihkanLogoLama(pathBaru);
         logoSekarang = pathBaru;
         $('logo-preview').src = pathBaru ? urlPublik('dokumentasi', pathBaru) : DEFAULT_LOGO;
         $('logo-file').value = '';
