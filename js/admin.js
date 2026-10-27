@@ -297,7 +297,7 @@ async function loadAnggota() {
                 <div class="font-semibold break-words">${escapeHtml(item.nama)}
                     ${item.disetujui ? '' : '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">Menunggu</span>'}
                 </div>
-                <div class="text-xs text-slate-500">${escapeHtml(item.sekolah)} • ${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)} • ${escapeHtml(item.status)}</div>
+                <div class="text-xs text-slate-500">${escapeHtml(item.sekolah)} • ${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)} • ${escapeHtml(item.status)} • Sertifikasi: ${escapeHtml(item.sertifikasi)}</div>
             </div>
             <div class="flex gap-2 shrink-0">
                 ${item.disetujui ? '' : '<button data-act="setujui" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold">Setujui</button>'}

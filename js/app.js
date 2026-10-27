@@ -59,6 +59,10 @@ async function loadAnggota() {
     filterAnggota();
 }
 
+function badgeSertifikasi(nilai) {
+    return nilai === 'Sudah' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600';
+}
+
 function renderAnggota(items) {
     const tbody = document.getElementById('table-body-anggota');
     const mobile = document.getElementById('list-anggota-mobile');
@@ -66,7 +70,7 @@ function renderAnggota(items) {
     mobile.innerHTML = '';
 
     if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Data anggota tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Data anggota tidak ditemukan.</td></tr>`;
         mobile.innerHTML = `<p class="bg-white rounded-2xl border border-slate-200 p-6 text-center text-sm text-slate-400">Data anggota tidak ditemukan.</p>`;
         return;
     }
@@ -90,6 +94,7 @@ function renderAnggota(items) {
             <td class="p-4">${escapeHtml(item.kelurahan)}</td>
             <td class="p-4"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-semibold">${escapeHtml(item.gugus)}</span></td>
             <td class="p-4"><span class="px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span></td>
+            <td class="p-4"><span class="px-2.5 py-1 ${badgeSertifikasi(item.sertifikasi)} rounded-full text-xs font-bold">${escapeHtml(item.sertifikasi)}</span></td>
         `;
         tbody.appendChild(tr);
 
@@ -104,7 +109,8 @@ function renderAnggota(items) {
                 <span class="shrink-0 px-2.5 py-1 ${badgeColor} rounded-full text-xs font-bold">${escapeHtml(item.status)}</span>
             </div>
             <div class="mt-3 text-sm text-slate-700 font-medium">${escapeHtml(item.sekolah)}</div>
-            <div class="mt-1 text-xs text-slate-500">${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)}</div>`;
+            <div class="mt-1 text-xs text-slate-500">${escapeHtml(item.kelurahan)} • ${escapeHtml(item.gugus)}</div>
+            <div class="mt-2"><span class="px-2.5 py-1 ${badgeSertifikasi(item.sertifikasi)} rounded-full text-xs font-bold">Sertifikasi: ${escapeHtml(item.sertifikasi)}</span></div>`;
         mobile.appendChild(card);
     });
 }
@@ -142,7 +148,8 @@ async function submitAnggotaBaru(e) {
         sekolah: document.getElementById('add-sekolah').value,
         kelurahan: document.getElementById('add-kelurahan').value,
         gugus: document.getElementById('add-gugus').value,
-        status: document.getElementById('add-status').value
+        status: document.getElementById('add-status').value,
+        sertifikasi: document.getElementById('add-sertifikasi').value
     };
 
     const { error } = await db.from('anggota').insert(row);
