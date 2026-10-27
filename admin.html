@@ -7,18 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Navigasi: bar bawah di HP, tab di layar lebar */
+        .admin-tab { color: #64748b; }
+        .admin-tab[aria-current="page"] { color: #047857; font-weight: 700; }
+        @media (min-width: 768px) {
+            .admin-tab { background: #fff; border: 1px solid #e2e8f0; }
+            .admin-tab[aria-current="page"] { background: #059669; border-color: #059669; color: #fff; }
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
-    <header class="bg-white border-b border-emerald-100 px-4 py-4 flex justify-between items-center">
-        <div>
-            <h1 class="font-bold text-emerald-900">Admin KKG PAI SD</h1>
-            <a href="index.html" class="text-xs text-emerald-600 hover:underline">← Kembali ke portal</a>
+    <header class="sticky top-0 z-30 bg-white border-b border-emerald-100 px-4 h-14 flex justify-between items-center">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="index.html" aria-label="Kembali ke portal" class="w-11 h-11 -ml-3 flex items-center justify-center text-emerald-700"><i class="fa-solid fa-arrow-left"></i></a>
+            <h1 id="judul-halaman" class="font-bold text-emerald-900 truncate">Admin KKG PAI SD</h1>
         </div>
-        <button id="btn-logout" class="hidden text-sm text-slate-600 hover:text-red-600">Keluar</button>
+        <button id="btn-logout" class="hidden h-11 px-3 -mr-3 text-sm text-slate-600 hover:text-red-600"><i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar</button>
     </header>
 
-    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+    <main id="admin-main" class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
         <!-- Login -->
         <section id="sec-login" class="hidden bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-md mx-auto">
             <h2 class="font-bold text-lg mb-4">Masuk Pengurus</h2>
@@ -33,12 +44,14 @@
         </section>
 
         <!-- Tabs -->
-        <nav id="admin-tabs" class="hidden flex flex-wrap gap-2 text-sm font-medium">
-            <button data-tab="dokumentasi" class="admin-tab px-4 py-2 rounded-lg bg-emerald-600 text-white">Dokumentasi</button>
-            <button data-tab="aspirasi" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Aspirasi</button>
-            <button data-tab="anggota" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Anggota</button>
-            <button data-tab="kontak" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Pengaturan</button>
-            <button data-tab="akun" class="admin-tab px-4 py-2 rounded-lg bg-white text-slate-600 border border-slate-200">Akun</button>
+        <nav id="admin-tabs" class="hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 pb-safe md:static md:bg-transparent md:border-0 md:pb-0">
+            <div class="grid grid-cols-5 md:flex md:gap-2">
+                <button data-tab="dokumentasi" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-images text-lg md:text-sm"></i>Galeri</button>
+                <button data-tab="aspirasi" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-comments text-lg md:text-sm"></i>Aspirasi</button>
+                <button data-tab="anggota" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-users text-lg md:text-sm"></i>Anggota</button>
+                <button data-tab="kontak" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-gear text-lg md:text-sm"></i>Pengaturan</button>
+                <button data-tab="akun" class="admin-tab h-16 md:h-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-[11px] md:text-sm md:px-4 md:py-2 md:rounded-lg"><i class="fa-solid fa-user-lock text-lg md:text-sm"></i>Akun</button>
+            </div>
         </nav>
 
         <!-- Dokumentasi -->
@@ -88,38 +101,57 @@
 
         <!-- Kontak & Sosmed -->
         <div id="tab-kontak" class="admin-panel hidden">
-            <section class="bg-white rounded-2xl p-6 shadow border border-slate-200 max-w-xl">
-                <h2 class="font-bold text-lg mb-1">Kontak, Media Sosial, Gugus & Kelurahan</h2>
-                <p class="text-xs text-slate-500 mb-4">Tampil di halaman Aspirasi & Kontak dan di footer. Kosongkan kolom yang tidak dipakai.</p>
-                <form id="form-kontak" class="space-y-4">
-                    <label class="block text-xs font-semibold text-slate-700">Alamat
-                        <textarea id="set-alamat" rows="2" maxlength="300" required class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal"></textarea>
+            <form id="form-kontak" class="space-y-4 max-w-xl">
+                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                    <div>
+                        <h2 class="font-bold text-base"><i class="fa-solid fa-address-book text-emerald-600 mr-2"></i>Kontak Sekretariat</h2>
+                        <p class="text-xs text-slate-500 mt-1">Tampil di halaman Aspirasi & Kontak. Kolom kosong tidak ditampilkan.</p>
+                    </div>
+                    <label class="block text-sm font-semibold text-slate-700">Alamat
+                        <textarea id="set-alamat" rows="2" maxlength="300" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Email
-                        <input id="set-email" type="email" maxlength="150" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
+                    <label class="block text-sm font-semibold text-slate-700">Email
+                        <input id="set-email" type="email" inputmode="email" autocapitalize="none" maxlength="150" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Nomor HP / WhatsApp
-                        <input id="set-telepon" type="tel" maxlength="30" placeholder="+62 8xx-xxxx-xxxx" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
+                    <label class="block text-sm font-semibold text-slate-700">Nomor HP / WhatsApp
+                        <input id="set-telepon" type="tel" inputmode="tel" maxlength="30" placeholder="0812xxxxxxx" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Link Facebook
-                        <input id="set-facebook" type="url" pattern="https://.*" placeholder="https://facebook.com/..." class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
+                </section>
+
+                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                    <div>
+                        <h2 class="font-bold text-base"><i class="fa-solid fa-share-nodes text-emerald-600 mr-2"></i>Media Sosial</h2>
+                        <p class="text-xs text-slate-500 mt-1">Tempel link lengkap yang diawali https://. Ikon hanya tampil di footer jika diisi.</p>
+                    </div>
+                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-facebook text-blue-600 mr-1"></i>Facebook
+                        <input id="set-facebook" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://facebook.com/..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Link YouTube
-                        <input id="set-youtube" type="url" pattern="https://.*" placeholder="https://youtube.com/@..." class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
+                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-youtube text-red-600 mr-1"></i>YouTube
+                        <input id="set-youtube" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://youtube.com/@..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Link Instagram
-                        <input id="set-instagram" type="url" pattern="https://.*" placeholder="https://instagram.com/..." class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal">
+                    <label class="block text-sm font-semibold text-slate-700"><i class="fa-brands fa-instagram text-pink-600 mr-1"></i>Instagram
+                        <input id="set-instagram" type="url" inputmode="url" autocapitalize="none" pattern="https://.*" placeholder="https://instagram.com/..." class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Daftar Gugus (satu per baris)
-                        <textarea id="set-daftar_gugus" rows="9" required class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal"></textarea>
+                </section>
+
+                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                    <div>
+                        <h2 class="font-bold text-base"><i class="fa-solid fa-school text-emerald-600 mr-2"></i>Gugus & Kelurahan</h2>
+                        <p class="text-xs text-slate-500 mt-1">Satu nama per baris. Dipakai di filter dan formulir pendaftaran anggota.</p>
+                    </div>
+                    <label class="block text-sm font-semibold text-slate-700">Daftar Gugus
+                        <textarea id="set-daftar_gugus" rows="9" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
                     </label>
-                    <label class="block text-xs font-semibold text-slate-700">Daftar Kelurahan (satu per baris)
-                        <textarea id="set-daftar_kelurahan" rows="5" required class="mt-1 w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-normal"></textarea>
+                    <label class="block text-sm font-semibold text-slate-700">Daftar Kelurahan
+                        <textarea id="set-daftar_kelurahan" rows="5" required class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
                     </label>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">Simpan Pengaturan</button>
-                    <p id="kontak-status" class="text-sm text-slate-600 hidden"></p>
-                </form>
-            </section>
+                </section>
+
+                <div class="sticky bottom-20 md:bottom-4 z-30">
+                    <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengaturan</button>
+                </div>
+                <p id="kontak-status" class="text-sm text-center hidden"></p>
+            </form>
         </div>
 
         <!-- Akun -->

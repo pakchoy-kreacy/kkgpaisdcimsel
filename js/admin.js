@@ -9,12 +9,14 @@ function escapeHtml(value) {
 function showTab(name) {
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + name));
     document.querySelectorAll('.admin-tab').forEach(b => {
-        const active = b.dataset.tab === name;
-        b.classList.toggle('bg-emerald-600', active);
-        b.classList.toggle('text-white', active);
-        b.classList.toggle('bg-white', !active);
-        b.classList.toggle('text-slate-600', !active);
+        if (b.dataset.tab === name) {
+            b.setAttribute('aria-current', 'page');
+            $('judul-halaman').innerText = b.innerText.trim();
+        } else {
+            b.removeAttribute('aria-current');
+        }
     });
+    window.scrollTo(0, 0);
     if (name === 'dokumentasi') loadDokumentasi();
     if (name === 'aspirasi') loadAspirasi();
     if (name === 'anggota') loadAnggota();
@@ -44,15 +46,27 @@ $('form-kontak').addEventListener('submit', async e => {
         row[k] = [...new Set($('set-' + k).value.split('\n').map(v => v.trim()).filter(Boolean))];
     });
 
-    const status = $('kontak-status');
-    status.classList.remove('hidden');
+    // Hasil simpan ditampilkan di tombol, karena tombolnya selalu terlihat di layar
+    const btn = e.submitter || $('form-kontak').querySelector('[type="submit"]');
+    const label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerText = 'Menyimpan...';
     const { error } = await db.from('pengaturan').update(row).eq('id', 1);
+    btn.disabled = false;
+
+    const status = $('kontak-status');
     if (error) {
         console.error(error);
+        btn.innerHTML = label;
+        status.classList.remove('hidden');
+        status.className = 'text-sm text-center text-red-600';
         status.innerText = 'Gagal menyimpan: ' + error.message;
+        status.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
-    status.innerText = 'Pengaturan tersimpan.';
+    status.classList.add('hidden');
+    btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Tersimpan';
+    setTimeout(() => { btn.innerHTML = label; }, 2000);
 });
 
 // Akun
@@ -82,6 +96,9 @@ $('form-password').addEventListener('submit', async e => {
 function showApp(loggedIn) {
     $('sec-login').classList.toggle('hidden', loggedIn);
     $('admin-tabs').classList.toggle('hidden', !loggedIn);
+    // ruang untuk bar navigasi bawah di HP
+    $('admin-main').classList.toggle('pb-28', loggedIn);
+    $('admin-main').classList.toggle('md:pb-6', loggedIn);
     $('btn-logout').classList.toggle('hidden', !loggedIn);
     if (loggedIn) showTab('dokumentasi');
 }
