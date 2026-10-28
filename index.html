@@ -265,7 +265,7 @@
             <div class="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
-                        <tr><th class="p-4">No</th><th class="p-4">Nama</th><th class="p-4">Sekolah</th><th class="p-4">Kelurahan</th><th class="p-4">Gugus</th><th class="p-4">Status</th><th class="p-4">Sertifikasi</th></tr>
+                        <tr><th class="p-4">No</th><th class="p-4">Nama</th><th class="p-4">Sekolah</th><th class="p-4">Kelurahan</th><th class="p-4">Gugus</th><th class="p-4">Status</th><th class="p-4">Sertifikasi</th><th class="p-4"><span class="sr-only">Aksi</span></th></tr>
                     </thead>
                     <tbody id="tabel-anggota"></tbody>
                 </table>
@@ -702,6 +702,39 @@
                 <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="kr-url">Tautan Karya</label><input id="kr-url" type="url" required inputmode="url" autocapitalize="none" pattern="https://.*" maxlength="500" placeholder="https://..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></div>
                 <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="kr-deskripsi">Deskripsi Singkat</label><textarea id="kr-deskripsi" rows="3" maxlength="1000" placeholder="Untuk materi apa, kelas berapa, cara pakainya" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></textarea></div>
                 <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition">Kirim Karya</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PERBAIKI DATA ANGGOTA -->
+    <div id="modal-usulan" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModalUsulan()" aria-label="Tutup" class="absolute top-3 right-3 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">Perbaiki Data Saya</h3>
+            <p class="text-xs text-slate-500 mb-6">Ubah yang belum sesuai atau tambahkan foto. Perubahan tampil setelah diperiksa pengurus.</p>
+            <form id="form-usulan" onsubmit="submitUsulan(event)" class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <img id="us-foto-preview" alt="" class="w-16 h-16 rounded-full object-cover border border-slate-200 bg-slate-100 shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-foto">Foto baru (tidak wajib)</label>
+                        <input id="us-foto" type="file" accept="image/*" class="w-full text-sm file:mr-3 file:h-11 file:px-4 file:rounded-xl file:border-0 file:bg-emerald-50 file:text-emerald-700 file:font-semibold">
+                    </div>
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-nama">Nama Lengkap (dengan Gelar)</label><input id="us-nama" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></div>
+                <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-nip">NIP / NUPTK</label><input id="us-nip" maxlength="30" inputmode="numeric" placeholder="Isi jika ingin diperbaiki" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></div>
+                <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-sekolah">Sekolah</label><input id="us-sekolah" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></div>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-kelurahan">Kelurahan</label><select id="us-kelurahan" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base bg-white"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-gugus">Gugus</label><select id="us-gugus" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base bg-white"></select></div>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-status">Status Kepegawaian</label><select id="us-status" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base bg-white"><option value="PNS">PNS</option><option value="PPPK">PPPK</option><option value="Non ASN Sekolah Negeri">Non ASN Sekolah Negeri</option><option value="Non ASN Sekolah Swasta">Non ASN Sekolah Swasta</option><option value="GTT">GTT (Guru Tidak Tetap)</option><option value="GTY">GTY (Guru Tetap Yayasan)</option></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-sertifikasi">Sertifikasi</label><select id="us-sertifikasi" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base bg-white"><option>Belum</option><option>Sudah</option></select></div>
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="us-catatan">Catatan untuk pengurus (tidak wajib)</label><textarea id="us-catatan" rows="2" maxlength="500" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base"></textarea></div>
+                <button id="btn-kirim-usulan" type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition disabled:opacity-60">Kirim Perbaikan</button>
             </form>
         </div>
     </div>

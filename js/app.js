@@ -110,7 +110,11 @@ async function loadPengaturan() {
     });
 }
 
+const pilihan = { kelurahan: [], gugus: [] };
+
 function isiDaftar(kelurahan, gugus) {
+    pilihan.kelurahan = kelurahan;
+    pilihan.gugus = gugus;
     const opsi = list => list.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
     document.getElementById('add-kelurahan').innerHTML = opsi(kelurahan);
     document.getElementById('add-gugus').innerHTML = opsi(gugus);
@@ -223,12 +227,12 @@ async function loadPengurus() {
     }).join('');
 }
 
-// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik_v2) ----------
+// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik_v3) ----------
 
 let dataAnggota = [];
 
 async function loadAnggota() {
-    const { data, error } = await db.rpc('daftar_anggota_publik_v2');
+    const { data, error } = await db.rpc('daftar_anggota_publik_v3');
     if (error) {
         console.error(error);
         document.getElementById('list-anggota').innerHTML = pesanKosong('Gagal memuat anggota.');
@@ -280,7 +284,10 @@ function renderAnggota() {
             </div>
             <div class="mt-2 text-sm text-slate-700 font-medium">${escapeHtml(a.sekolah)}</div>
             <div class="mt-1 text-xs text-slate-500">${escapeHtml(a.kelurahan)} • ${escapeHtml(a.gugus)}</div>
-            <div class="mt-2">${badge(badgeSertifikasi(a.sertifikasi), 'Sertifikasi: ' + a.sertifikasi)}</div>
+            <div class="mt-3 flex items-center justify-between gap-3">
+                ${badge(badgeSertifikasi(a.sertifikasi), 'Sertifikasi: ' + a.sertifikasi)}
+                <button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button>
+            </div>
         </div>`).join('') : pesanKosong(kosong);
 
     document.getElementById('tabel-anggota').innerHTML = hasil.length ? hasil.map((a, i) => `
@@ -292,7 +299,87 @@ function renderAnggota() {
             <td class="p-4">${escapeHtml(a.gugus)}</td>
             <td class="p-4">${badge(badgeStatus(a.status), a.status)}</td>
             <td class="p-4">${badge(badgeSertifikasi(a.sertifikasi), a.sertifikasi)}</td>
-        </tr>`).join('') : `<tr><td colspan="7">${pesanKosong(kosong)}</td></tr>`;
+            <td class="p-4 text-right"><button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button></td>
+        </tr>`).join('') : `<tr><td colspan="8">${pesanKosong(kosong)}</td></tr>`;
+}
+
+// ---------- Perbaikan data oleh anggota (usulan, diterapkan pengurus) ----------
+
+let anggotaUsulan = null;
+
+function isiPilihan(select, daftar, nilai) {
+    const semua = daftar.includes(nilai) ? daftar : [nilai, ...daftar];
+    select.innerHTML = semua.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    select.value = nilai;
+}
+
+function openModalUsulan(id) {
+    const a = dataAnggota.find(x => x.id === id);
+    if (!a) return;
+    anggotaUsulan = a;
+    document.getElementById('form-usulan').reset();
+    document.getElementById('us-nama').value = a.nama;
+    document.getElementById('us-sekolah').value = a.sekolah;
+    isiPilihan(document.getElementById('us-kelurahan'), pilihan.kelurahan, a.kelurahan);
+    isiPilihan(document.getElementById('us-gugus'), pilihan.gugus, a.gugus);
+    document.getElementById('us-status').value = a.status;
+    document.getElementById('us-sertifikasi').value = a.sertifikasi;
+    const preview = document.getElementById('us-foto-preview');
+    preview.src = a.foto_path ? publicUrl('foto-anggota', a.foto_path) : DEFAULT_LOGO;
+    document.getElementById('modal-usulan').classList.remove('hidden');
+}
+
+function closeModalUsulan() {
+    document.getElementById('modal-usulan').classList.add('hidden');
+}
+
+document.getElementById('us-foto').addEventListener('change', e => {
+    if (e.target.files[0]) document.getElementById('us-foto-preview').src = URL.createObjectURL(e.target.files[0]);
+});
+
+async function submitUsulan(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-kirim-usulan');
+    btn.disabled = true;
+    btn.innerText = 'Mengirim...';
+    try {
+        let foto_path = null;
+        const file = document.getElementById('us-foto').files[0];
+        if (file) {
+            try {
+                const foto = await kecilkanFoto(file);
+                foto_path = namaFotoAcak('daftar');
+                const { error } = await db.storage.from('foto-anggota').upload(foto_path, foto, { contentType: 'image/jpeg' });
+                if (error) throw error;
+            } catch (err) {
+                console.error(err);
+                showToast('Foto gagal diunggah. Coba foto lain, atau kirim tanpa foto.');
+                return;
+            }
+        }
+        const { error } = await db.from('usulan_anggota').insert({
+            anggota_id: anggotaUsulan.id,
+            nama: document.getElementById('us-nama').value.trim(),
+            nip: document.getElementById('us-nip').value.trim() || null,
+            sekolah: document.getElementById('us-sekolah').value.trim(),
+            kelurahan: document.getElementById('us-kelurahan').value,
+            gugus: document.getElementById('us-gugus').value,
+            status: document.getElementById('us-status').value,
+            sertifikasi: document.getElementById('us-sertifikasi').value,
+            foto_path,
+            catatan: document.getElementById('us-catatan').value.trim() || null
+        });
+        if (error) {
+            console.error(error);
+            showToast('Gagal mengirim perbaikan.');
+            return;
+        }
+        closeModalUsulan();
+        showToast('Perbaikan terkirim. Tampil setelah diperiksa pengurus.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Kirim Perbaikan';
+    }
 }
 
 // ---------- Perangkat ajar ----------

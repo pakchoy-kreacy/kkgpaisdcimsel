@@ -59,8 +59,10 @@ document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click'
 
 // Jumlah kiriman yang menunggu persetujuan, tampil sebagai lencana merah di navigasi
 async function muatBadge() {
+    const { count: usulan } = await db.from('usulan_anggota').select('id', { count: 'exact', head: true });
     for (const tabel of ['anggota', 'karya']) {
-        const { count } = await db.from(tabel).select('id', { count: 'exact', head: true }).eq('disetujui', false);
+        let { count } = await db.from(tabel).select('id', { count: 'exact', head: true }).eq('disetujui', false);
+        if (tabel === 'anggota') count = (count || 0) + (usulan || 0);
         document.querySelectorAll(`[data-badge="${tabel}"]`).forEach(el => {
             el.innerText = count > 99 ? '99+' : count;
             el.classList.toggle('hidden', !count);
@@ -591,8 +593,63 @@ daftarMuat.anggota = async () => {
         daftarPilihan.kelurahan = data.daftar_kelurahan;
         daftarPilihan.gugus = data.daftar_gugus;
     }
+    muatUsulan();
     muatAnggota();
 };
+
+// ---------- Usulan perbaikan dari anggota ----------
+
+const KOLOM_USULAN = [['nama', 'Nama'], ['nip', 'NIP/NUPTK'], ['sekolah', 'Sekolah'], ['kelurahan', 'Kelurahan'], ['gugus', 'Gugus'], ['status', 'Status'], ['sertifikasi', 'Sertifikasi']];
+
+function bedaUsulan(u) {
+    const a = u.anggota;
+    return KOLOM_USULAN
+        .filter(([k]) => u[k] !== null && u[k] !== '' && u[k] !== a[k])
+        .map(([k, label]) => `<div><span class="text-slate-500">${label}:</span> <s class="text-red-600">${esc(a[k])}</s> → <b class="text-emerald-700">${esc(u[k])}</b></div>`)
+        .join('');
+}
+
+const muatUsulan = buatDaftar('list-usulan', {
+    muat: async () => cek(db.from('usulan_anggota').select('*, anggota(*)').order('created_at'), 'Gagal memuat usulan.'),
+    kosong: 'Tidak ada usulan.',
+    baris: u => `
+        <div class="flex items-start gap-3">
+            ${u.foto_path ? `<img src="${esc(urlPublik('foto-anggota', u.foto_path))}" alt="Foto baru" class="w-14 h-14 rounded-full object-cover bg-slate-100 shrink-0">` : ''}
+            <div class="min-w-0 flex-1 space-y-0.5">
+                <div class="font-semibold break-words">${esc(u.anggota.nama)}</div>
+                ${bedaUsulan(u) || (u.foto_path ? '' : '<div class="text-slate-500">Tidak ada perubahan data.</div>')}
+                ${u.foto_path ? '<div class="text-emerald-700">+ Foto baru</div>' : ''}
+                ${u.catatan ? `<div class="text-xs text-slate-600 break-words">Catatan: ${esc(u.catatan)}</div>` : ''}
+                <div class="text-xs text-slate-400">${new Date(u.created_at).toLocaleString('id-ID')}</div>
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+                <button data-act="terapkan" class="h-11 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold">Terapkan</button>
+                <button data-act="tolak" class="h-11 px-3 rounded-lg text-red-600 border border-red-200 text-xs font-semibold">Tolak</button>
+            </div>
+        </div>`,
+    aksi: {
+        terapkan: async u => {
+            const ubah = { nama: u.nama, sekolah: u.sekolah, kelurahan: u.kelurahan, gugus: u.gugus, status: u.status, sertifikasi: u.sertifikasi };
+            if (u.nip) ubah.nip = u.nip;
+            if (u.foto_path) ubah.foto_path = u.foto_path;
+            await cek(db.from('anggota').update(ubah).eq('id', u.anggota_id), 'Gagal menerapkan.');
+            if (u.foto_path && u.anggota.foto_path) await hapusBerkas('foto-anggota', u.anggota.foto_path);
+            await cek(db.from('usulan_anggota').delete().eq('id', u.id), 'Gagal menghapus usulan.');
+            muatAnggota();
+            muatBadge();
+        },
+        tolak: async u => {
+            if (!confirm(`Tolak usulan perbaikan untuk "${u.anggota.nama}"?`)) return false;
+            await cek(db.from('usulan_anggota').delete().eq('id', u.id), 'Gagal menolak.');
+            await hapusBerkas('foto-anggota', u.foto_path);
+            muatBadge();
+        }
+    },
+    setelahMuat: data => {
+        $('sec-usulan').classList.toggle('hidden', data.length === 0);
+        $('usulan-total').innerText = data.length ? `(${data.length})` : '';
+    }
+});
 
 // ---------- Edit anggota ----------
 
