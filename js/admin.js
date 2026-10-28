@@ -455,6 +455,7 @@ const muatAnggota = buatDaftar('list-anggota', {
     kosong: 'Belum ada anggota.',
     baris: r => `
         <div class="flex items-center gap-3">
+            <img src="${esc(fotoAnggota(r))}" alt="" class="w-12 h-12 rounded-full object-cover bg-slate-100 shrink-0">
             <div class="min-w-0 flex-1">
                 <div class="font-semibold break-words">${esc(r.nama)}
                     ${r.disetujui ? '' : '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">Menunggu</span>'}
@@ -464,15 +465,18 @@ const muatAnggota = buatDaftar('list-anggota', {
             </div>
             <div class="flex flex-col gap-2 shrink-0">
                 ${r.disetujui ? '' : '<button data-act="setujui" class="h-11 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold">Setujui</button>'}
+                <button data-act="edit" class="h-11 px-3 rounded-lg border border-emerald-600 text-emerald-700 text-xs font-bold">Edit</button>
                 ${tombolHapus}
             </div>
         </div>`,
     aksi: {
+        edit: async r => { bukaEditAnggota(r); return false; },
         setujui: async r => cek(db.from('anggota').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'),
         sertifikasi: async r => cek(db.from('anggota').update({ sertifikasi: r.sertifikasi === 'Sudah' ? 'Belum' : 'Sudah' }).eq('id', r.id), 'Gagal mengubah.'),
         hapus: async r => {
             if (!confirm(`Hapus data anggota "${r.nama}"?`)) return false;
             await cek(db.from('anggota').delete().eq('id', r.id), 'Gagal menghapus.');
+            await hapusBerkas('foto-anggota', r.foto_path);
         }
     },
     setelahMuat: data => {
@@ -481,7 +485,88 @@ const muatAnggota = buatDaftar('list-anggota', {
         $('anggota-total').innerText = `(${data.length}${menunggu ? `, ${menunggu} menunggu` : ''})`;
     }
 });
-daftarMuat.anggota = muatAnggota;
+daftarMuat.anggota = async () => {
+    $('form-edit-anggota').classList.add('hidden');
+    const { data } = await db.from('pengaturan').select('daftar_kelurahan, daftar_gugus').eq('id', 1).single();
+    if (data) {
+        daftarPilihan.kelurahan = data.daftar_kelurahan;
+        daftarPilihan.gugus = data.daftar_gugus;
+    }
+    muatAnggota();
+};
+
+// ---------- Edit anggota ----------
+
+const daftarPilihan = { kelurahan: [], gugus: [] };
+let anggotaDiedit = null;
+
+function fotoAnggota(r) {
+    if (r.foto_path) return urlPublik('foto-anggota', r.foto_path);
+    const inisial = r.nama.trim().split(/\s+/).slice(0, 2).map(k => k[0]).join('').toUpperCase();
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="%23d1fae5"/><text x="24" y="30" font-family="sans-serif" font-size="17" font-weight="700" fill="%23065f46" text-anchor="middle">${encodeURIComponent(inisial)}</text></svg>`;
+}
+
+// Isi pilihan; nilai lama yang sudah tidak ada di daftar tetap dipertahankan
+function isiPilihan(select, daftar, nilai) {
+    const semua = daftar.includes(nilai) ? daftar : [nilai, ...daftar];
+    select.innerHTML = semua.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    select.value = nilai;
+}
+
+function bukaEditAnggota(r) {
+    anggotaDiedit = r;
+    $('ed-nama').value = r.nama;
+    $('ed-nip').value = r.nip === '-' ? '' : r.nip;
+    $('ed-sekolah').value = r.sekolah;
+    isiPilihan($('ed-kelurahan'), daftarPilihan.kelurahan, r.kelurahan);
+    isiPilihan($('ed-gugus'), daftarPilihan.gugus, r.gugus);
+    $('ed-status').value = r.status;
+    $('ed-sertifikasi').value = r.sertifikasi;
+    $('ed-foto').value = '';
+    $('ed-foto-hapus').checked = false;
+    $('ed-foto-hapus').closest('label').classList.toggle('hidden', !r.foto_path);
+    $('ed-foto-preview').src = fotoAnggota(r);
+    $('form-edit-anggota-status').classList.add('hidden');
+    $('form-edit-anggota').classList.remove('hidden');
+    $('form-edit-anggota').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('btn-batal-edit').addEventListener('click', () => $('form-edit-anggota').classList.add('hidden'));
+
+$('ed-foto').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) {
+        $('ed-foto-preview').src = URL.createObjectURL(file);
+        $('ed-foto-hapus').checked = false;
+    }
+});
+
+$('form-edit-anggota').addEventListener('submit', e => {
+    e.preventDefault();
+    const r = anggotaDiedit;
+    kirim(e.target, async () => {
+        const file = $('ed-foto').files[0];
+        let foto_path = $('ed-foto-hapus').checked ? null : r.foto_path;
+        if (file) {
+            const foto = await kecilkanFoto(file);
+            foto_path = namaFotoAcak('admin');
+            await cek(db.storage.from('foto-anggota').upload(foto_path, foto, { contentType: 'image/jpeg' }), 'Gagal mengunggah foto.');
+        }
+        try {
+            await cek(db.from('anggota').update({
+                nama: $('ed-nama').value, nip: $('ed-nip').value.trim() || '-', sekolah: $('ed-sekolah').value,
+                kelurahan: $('ed-kelurahan').value, gugus: $('ed-gugus').value,
+                status: $('ed-status').value, sertifikasi: $('ed-sertifikasi').value, foto_path
+            }).eq('id', r.id), 'Gagal menyimpan.');
+        } catch (err) {
+            if (file) await hapusBerkas('foto-anggota', foto_path);
+            throw err;
+        }
+        if (r.foto_path && r.foto_path !== foto_path) await hapusBerkas('foto-anggota', r.foto_path);
+        $('form-edit-anggota').classList.add('hidden');
+        muatAnggota();
+    });
+});
 
 $('btn-csv-anggota').addEventListener('click', () => {
     if (dataAnggota.length === 0) return alert('Belum ada data anggota.');

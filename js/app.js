@@ -132,8 +132,44 @@ function closeModalTambahAnggota() {
     document.getElementById('modal-anggota').classList.add('hidden');
 }
 
+document.getElementById('add-foto').addEventListener('change', e => {
+    const file = e.target.files[0];
+    const preview = document.getElementById('add-foto-preview');
+    preview.classList.toggle('hidden', !file);
+    if (file) preview.src = URL.createObjectURL(file);
+});
+
 async function submitAnggotaBaru(e) {
     e.preventDefault();
+    const btn = document.getElementById('btn-simpan-anggota');
+    const label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerText = 'Mengirim...';
+    try {
+        await kirimPendaftaran();
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = label;
+    }
+}
+
+async function kirimPendaftaran() {
+    // Foto tidak wajib; diunggah dulu karena pendaftar tidak bisa mengubah data setelah terkirim
+    let foto_path = null;
+    const file = document.getElementById('add-foto').files[0];
+    if (file) {
+        try {
+            const foto = await kecilkanFoto(file);
+            foto_path = namaFotoAcak('daftar');
+            const { error } = await db.storage.from('foto-anggota').upload(foto_path, foto, { contentType: 'image/jpeg' });
+            if (error) throw error;
+        } catch (err) {
+            console.error(err);
+            showToast('Foto gagal diunggah. Coba foto lain, atau kirim tanpa foto.');
+            return;
+        }
+    }
+
     const row = {
         nama: document.getElementById('add-nama').value,
         nip: document.getElementById('add-nip').value || '-',
@@ -141,7 +177,8 @@ async function submitAnggotaBaru(e) {
         kelurahan: document.getElementById('add-kelurahan').value,
         gugus: document.getElementById('add-gugus').value,
         status: document.getElementById('add-status').value,
-        sertifikasi: document.getElementById('add-sertifikasi').value
+        sertifikasi: document.getElementById('add-sertifikasi').value,
+        foto_path
     };
 
     const { error } = await db.from('anggota').insert(row);
@@ -152,6 +189,7 @@ async function submitAnggotaBaru(e) {
     }
     closeModalTambahAnggota();
     document.getElementById('form-tambah-anggota').reset();
+    document.getElementById('add-foto-preview').classList.add('hidden');
     showToast('Pendaftaran terkirim. Data masuk setelah disetujui pengurus.');
 }
 
@@ -185,12 +223,12 @@ async function loadPengurus() {
     }).join('');
 }
 
-// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik) ----------
+// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik_v2) ----------
 
 let dataAnggota = [];
 
 async function loadAnggota() {
-    const { data, error } = await db.rpc('daftar_anggota_publik');
+    const { data, error } = await db.rpc('daftar_anggota_publik_v2');
     if (error) {
         console.error(error);
         document.getElementById('list-anggota').innerHTML = pesanKosong('Gagal memuat anggota.');
@@ -214,6 +252,14 @@ function badgeSertifikasi(nilai) {
     return nilai === 'Sudah' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600';
 }
 
+function avatarAnggota(a, ukuran) {
+    if (a.foto_path) {
+        return `<img src="${escapeHtml(publicUrl('foto-anggota', a.foto_path))}" alt="" loading="lazy" class="${ukuran} rounded-full object-cover shrink-0 bg-slate-100">`;
+    }
+    const inisial = a.nama.trim().split(/\s+/).slice(0, 2).map(k => k[0]).join('').toUpperCase();
+    return `<div class="${ukuran} rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">${escapeHtml(inisial)}</div>`;
+}
+
 function renderAnggota() {
     const cari = document.getElementById('cari-anggota').value.toLowerCase();
     const gugus = document.getElementById('filter-gugus-anggota').value;
@@ -227,8 +273,9 @@ function renderAnggota() {
 
     document.getElementById('list-anggota').innerHTML = hasil.length ? hasil.map(a => `
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-            <div class="flex justify-between items-start gap-3">
-                <div class="font-bold text-slate-800 break-words min-w-0">${escapeHtml(a.nama)}</div>
+            <div class="flex items-start gap-3">
+                ${avatarAnggota(a, 'w-12 h-12')}
+                <div class="font-bold text-slate-800 break-words min-w-0 flex-1 self-center">${escapeHtml(a.nama)}</div>
                 ${badge(badgeStatus(a.status), a.status)}
             </div>
             <div class="mt-2 text-sm text-slate-700 font-medium">${escapeHtml(a.sekolah)}</div>
@@ -239,7 +286,7 @@ function renderAnggota() {
     document.getElementById('tabel-anggota').innerHTML = hasil.length ? hasil.map((a, i) => `
         <tr class="border-b border-slate-100">
             <td class="p-4">${i + 1}</td>
-            <td class="p-4 font-bold text-slate-800">${escapeHtml(a.nama)}</td>
+            <td class="p-4 font-bold text-slate-800"><div class="flex items-center gap-3">${avatarAnggota(a, 'w-10 h-10')}<span>${escapeHtml(a.nama)}</span></div></td>
             <td class="p-4">${escapeHtml(a.sekolah)}</td>
             <td class="p-4">${escapeHtml(a.kelurahan)}</td>
             <td class="p-4">${escapeHtml(a.gugus)}</td>

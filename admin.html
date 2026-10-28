@@ -170,6 +170,32 @@
         </div>
 
         <div id="tab-anggota" class="admin-panel hidden space-y-4">
+            <form id="form-edit-anggota" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4 border-emerald-400 ring-2 ring-emerald-100">
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-base">Edit Data Anggota</h2>
+                    <button type="button" id="btn-batal-edit" class="h-11 px-3 text-sm text-slate-600">Batal</button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <img id="ed-foto-preview" alt="" class="w-20 h-20 rounded-full object-cover border border-slate-200 bg-slate-100 shrink-0">
+                    <div class="space-y-2 min-w-0 flex-1">
+                        <input id="ed-foto" type="file" accept="image/*" class="w-full text-sm file:mr-3 file:h-11 file:px-4 file:rounded-xl file:border-0 file:bg-emerald-50 file:text-emerald-700 file:font-semibold">
+                        <label class="flex items-center gap-2 min-h-11 text-sm text-slate-700"><input id="ed-foto-hapus" type="checkbox" class="w-5 h-5 accent-red-600">Hapus foto</label>
+                    </div>
+                </div>
+                <label class="block text-sm font-semibold text-slate-700">Nama lengkap (dengan gelar)<span class="block mt-1"><input id="ed-nama" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <label class="block text-sm font-semibold text-slate-700">NIP / NUPTK<span class="block mt-1"><input id="ed-nip" maxlength="30" inputmode="numeric" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <label class="block text-sm font-semibold text-slate-700">Sekolah<span class="block mt-1"><input id="ed-sekolah" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <label class="block text-sm font-semibold text-slate-700">Kelurahan<span class="block mt-1"><select id="ed-kelurahan" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Gugus<span class="block mt-1"><select id="ed-gugus" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></span></label>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <label class="block text-sm font-semibold text-slate-700">Status kepegawaian<span class="block mt-1"><select id="ed-status" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option value="PNS">PNS</option><option value="PPPK">PPPK</option><option value="Non ASN Sekolah Negeri">Non ASN Sekolah Negeri</option><option value="Non ASN Sekolah Swasta">Non ASN Sekolah Swasta</option><option value="GTT">GTT (Guru Tidak Tetap)</option><option value="GTY">GTY (Guru Tetap Yayasan)</option></select></span></label>
+                    <label class="block text-sm font-semibold text-slate-700">Sertifikasi<span class="block mt-1"><select id="ed-sertifikasi" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Belum</option><option>Sudah</option></select></span></label>
+                </div>
+                <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Perubahan</button>
+                <p id="form-edit-anggota-status" class="text-sm text-center hidden"></p>
+            </form>
             <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <h2 class="font-bold text-base">Data Anggota <span id="anggota-total" class="font-normal text-slate-500"></span></h2>

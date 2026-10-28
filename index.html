@@ -667,8 +667,16 @@
                         <option value="Sudah">Sudah</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1" for="add-foto">Foto (tidak wajib)</label>
+                    <div class="flex items-center gap-3">
+                        <img id="add-foto-preview" alt="" class="hidden w-14 h-14 rounded-full object-cover border border-slate-200 shrink-0">
+                        <input id="add-foto" type="file" accept="image/*" class="w-full text-sm file:mr-3 file:h-11 file:px-4 file:rounded-xl file:border-0 file:bg-emerald-50 file:text-emerald-700 file:font-semibold">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Foto wajah yang jelas. Otomatis diperkecil sebelum dikirim.</p>
+                </div>
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition">
+                    <button id="btn-simpan-anggota" type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition disabled:opacity-60">
                         Simpan Data Anggota
                     </button>
                 </div>
