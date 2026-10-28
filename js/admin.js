@@ -130,10 +130,60 @@ async function hapusBerkas(bucket, path) {
 const daftarMuat = {};
 
 // Daftar dengan tombol aksi; klik tombol berlabel data-act dijalankan dengan baris datanya
-function buatDaftar(ulId, { muat, baris, kosong, aksi, setelahMuat }) {
+// Opsional: perHalaman (nomor halaman di bawah daftar), cari + cocok (kotak pencarian), info (teks "Menampilkan ...")
+function buatDaftar(ulId, { muat, baris, kosong, aksi, setelahMuat, perHalaman, cari, cocok, info }) {
     const ul = $(ulId);
     let rows = new Map();
+    let semua = [];
+    let halaman = 1;
+    const pager = document.createElement('nav');
+    pager.className = 'mt-4 flex flex-wrap items-center justify-center gap-2';
+    pager.setAttribute('aria-label', 'Halaman daftar');
+    ul.insertAdjacentElement('afterend', pager);
 
+    function tampilkan() {
+        const q = cari ? $(cari).value.trim().toLowerCase() : '';
+        const hasil = q ? semua.filter(r => cocok(r, q)) : semua;
+        const per = perHalaman || hasil.length || 1;
+        const jumlahHalaman = Math.max(1, Math.ceil(hasil.length / per));
+        halaman = Math.min(Math.max(1, halaman), jumlahHalaman);
+        const awal = (halaman - 1) * per;
+        const tampil = hasil.slice(awal, awal + per);
+
+        ul.innerHTML = tampil.length
+            ? tampil.map((r, i) => `<li class="py-3" data-row="${r.id}">${baris(r, awal + i + 1)}</li>`).join('')
+            : `<li class="py-3 text-slate-400">${q ? 'Tidak ditemukan.' : kosong}</li>`;
+        if (info) {
+            $(info).innerText = hasil.length > per
+                ? `Menampilkan ${awal + 1}–${awal + tampil.length} dari ${hasil.length}`
+                : (q ? `${hasil.length} ditemukan` : '');
+        }
+
+        pager.innerHTML = '';
+        if (jumlahHalaman <= 1) return;
+        const nomor = [];
+        for (let n = 1; n <= jumlahHalaman; n++) {
+            if (n === 1 || n === jumlahHalaman || Math.abs(n - halaman) <= 1) nomor.push(n);
+            else if (nomor[nomor.length - 1] !== '…') nomor.push('…');
+        }
+        const tombol = (n, isi, label, aktif, mati) => `<button type="button" data-hal="${n}" aria-label="${label}" ${aktif ? 'aria-current="page"' : ''} ${mati ? 'disabled' : ''}
+            class="min-w-11 h-11 px-3 rounded-xl text-sm font-semibold border ${aktif ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-700'} disabled:opacity-40">${isi}</button>`;
+        pager.innerHTML =
+            tombol(halaman - 1, '<i class="fa-solid fa-chevron-left"></i>', 'Halaman sebelumnya', false, halaman === 1) +
+            nomor.map(n => n === '…' ? '<span class="px-1 text-slate-400">…</span>' : tombol(n, n, 'Halaman ' + n, n === halaman, false)).join('') +
+            tombol(halaman + 1, '<i class="fa-solid fa-chevron-right"></i>', 'Halaman berikutnya', false, halaman === jumlahHalaman);
+    }
+
+    pager.addEventListener('click', e => {
+        const b = e.target.closest('[data-hal]');
+        if (!b || b.disabled) return;
+        halaman = Number(b.dataset.hal);
+        tampilkan();
+        ul.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    if (cari) $(cari).addEventListener('input', () => { halaman = 1; tampilkan(); });
+
+    // Muat ulang tetap di halaman yang sama (misalnya setelah Setujui di halaman 2)
     async function segarkan() {
         let data;
         try {
@@ -143,8 +193,9 @@ function buatDaftar(ulId, { muat, baris, kosong, aksi, setelahMuat }) {
             ul.innerHTML = '<li class="py-3 text-red-600">Gagal memuat data.</li>';
             return;
         }
+        semua = data;
         rows = new Map(data.map(r => [String(r.id), r]));
-        ul.innerHTML = data.length ? data.map(r => `<li class="py-3" data-row="${r.id}">${baris(r)}</li>`).join('') : `<li class="py-3 text-slate-400">${kosong}</li>`;
+        tampilkan();
         if (setelahMuat) setelahMuat(data);
     }
 
@@ -554,8 +605,13 @@ const muatAnggota = buatDaftar('list-anggota', {
     muat: async () => (await cek(db.from('anggota').select('*').order('created_at', { ascending: false }), 'Gagal memuat.'))
         .sort((a, b) => a.disetujui - b.disetujui),
     kosong: 'Belum ada anggota.',
-    baris: r => `
+    perHalaman: 25,
+    cari: 'cari-anggota-admin',
+    cocok: (r, q) => [r.nama, r.sekolah, r.gugus, r.kelurahan].some(v => v.toLowerCase().includes(q)),
+    info: 'anggota-info-halaman',
+    baris: (r, no) => `
         <div class="flex items-center gap-3">
+            <span class="w-6 shrink-0 text-right text-xs text-slate-400">${no}</span>
             <img src="${esc(fotoAnggota(r))}" alt="" class="w-12 h-12 rounded-full object-cover bg-slate-100 shrink-0">
             <div class="min-w-0 flex-1">
                 <div class="font-semibold break-words">${esc(r.nama)}

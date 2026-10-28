@@ -237,8 +237,13 @@
             <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <h2 class="font-bold text-base">Data Anggota <span id="anggota-total" class="font-normal text-slate-500"></span></h2>
-                    <button id="btn-csv-anggota" type="button" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-file-csv mr-2"></i>CSV</button>
+                    <button id="btn-csv-anggota" type="button" class="shrink-0 whitespace-nowrap h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-file-csv mr-2"></i>CSV</button>
                 </div>
+                <div class="relative mb-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-4 text-slate-400"></i>
+                    <input id="cari-anggota-admin" type="search" placeholder="Cari nama, sekolah, atau gugus..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <p id="anggota-info-halaman" class="text-xs text-slate-500 mt-2"></p>
                 <ul id="list-anggota" class="divide-y divide-slate-100 text-sm"></ul>
             </section>
         </div>
