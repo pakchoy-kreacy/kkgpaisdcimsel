@@ -819,66 +819,88 @@ daftarMuat.pengaturan = async () => {
     if (error) return console.error(error);
     KOLOM_TEKS.forEach(k => { $('set-' + k).value = data[k]; });
     KOLOM_DAFTAR.forEach(k => { $('set-' + k).value = data[k].join('\n'); });
-    logoSekarang = data.logo_path;
-    $('logo-preview').src = data.logo_path ? urlPublik('dokumentasi', data.logo_path) : DEFAULT_LOGO;
+    isiLogo(data);
+    isiLatar(data);
 };
 
-// Logo: diunggah langsung, terpisah dari tombol Simpan Pengaturan
-let logoSekarang = null;
+// Logo dan latar beranda: diunggah langsung, terpisah dari tombol Simpan Pengaturan.
+// Setiap kali gambar baru terpasang, berkas lama di foldernya dibersihkan.
+function pengaturGambar({ id, kolom, folder, bawaan, nama, unggahBerkas }) {
+    const el = {
+        preview: $(id + '-preview'), file: $(id + '-file'), status: $(id + '-status'),
+        simpan: $('btn-' + id + '-simpan'), reset: $('btn-' + id + '-reset')
+    };
+    let sekarang = null;
 
-// Hapus semua berkas di folder logo/ selain logo yang sedang dipakai
-async function bersihkanLogoLama(pathDipakai) {
-    const { data, error } = await db.storage.from('dokumentasi').list('logo', { limit: 1000 });
-    if (error) return console.error(error);
-    const lama = data.map(f => 'logo/' + f.name).filter(p => p !== pathDipakai);
-    for (let i = 0; i < lama.length; i += 100) {
-        await db.storage.from('dokumentasi').remove(lama.slice(i, i + 100));
+    function pesan(teks, gagal) {
+        el.status.className = `text-sm text-center ${gagal ? 'text-red-600' : 'text-slate-600'}`;
+        el.status.innerText = teks;
     }
+
+    async function bersihkan(dipakai) {
+        const { data, error } = await db.storage.from('dokumentasi').list(folder, { limit: 1000 });
+        if (error) return console.error(error);
+        const lama = data.map(f => folder + '/' + f.name).filter(p => p !== dipakai);
+        for (let i = 0; i < lama.length; i += 100) {
+            await db.storage.from('dokumentasi').remove(lama.slice(i, i + 100));
+        }
+    }
+
+    async function ganti(pathBaru) {
+        el.simpan.disabled = el.reset.disabled = true;
+        pesan('Menyimpan...');
+        try {
+            await cek(db.from('pengaturan').update({ [kolom]: pathBaru }).eq('id', 1), `Gagal menyimpan ${nama}.`);
+            await bersihkan(pathBaru);
+            sekarang = pathBaru;
+            el.preview.src = pathBaru ? urlPublik('dokumentasi', pathBaru) : bawaan;
+            el.file.value = '';
+            pesan(`${nama[0].toUpperCase() + nama.slice(1)} tersimpan. Muat ulang portal untuk melihatnya.`);
+        } catch (err) {
+            await hapusBerkas('dokumentasi', pathBaru);
+            pesan(err.message, true);
+        } finally {
+            el.simpan.disabled = el.reset.disabled = false;
+        }
+    }
+
+    el.simpan.addEventListener('click', async () => {
+        const file = el.file.files[0];
+        if (!file) return pesan(`Pilih berkas ${nama} dulu.`, true);
+        let path;
+        try {
+            pesan('Mengunggah...');
+            path = await unggahBerkas(file);
+        } catch (err) {
+            return pesan(err.message, true);
+        }
+        ganti(path);
+    });
+
+    el.reset.addEventListener('click', () => {
+        if (sekarang && confirm(`Kembalikan ke ${nama} bawaan?`)) ganti(null);
+    });
+
+    return data => {
+        sekarang = data[kolom];
+        el.preview.src = sekarang ? urlPublik('dokumentasi', sekarang) : bawaan;
+    };
 }
 
-async function gantiLogo(btn, pathBaru) {
-    const status = $('logo-status');
-    btn.disabled = true;
-    status.className = 'text-sm text-center text-slate-600';
-    status.innerText = 'Menyimpan...';
-    try {
-        await cek(db.from('pengaturan').update({ logo_path: pathBaru }).eq('id', 1), 'Gagal menyimpan logo.');
-        await bersihkanLogoLama(pathBaru);
-        logoSekarang = pathBaru;
-        $('logo-preview').src = pathBaru ? urlPublik('dokumentasi', pathBaru) : DEFAULT_LOGO;
-        $('logo-file').value = '';
-        status.innerText = 'Logo tersimpan. Muat ulang portal untuk melihatnya.';
-    } catch (err) {
-        await hapusBerkas('dokumentasi', pathBaru);
-        status.className = 'text-sm text-center text-red-600';
-        status.innerText = err.message;
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-$('btn-logo-simpan').addEventListener('click', async e => {
-    const btn = e.currentTarget; // simpan sebelum await; setelahnya currentTarget bernilai null
-    const file = $('logo-file').files[0];
-    if (!file) {
-        $('logo-status').className = 'text-sm text-center text-red-600';
-        $('logo-status').innerText = 'Pilih berkas logo dulu.';
-        return;
-    }
-    let path;
-    try {
-        path = await unggah('dokumentasi', file, 'logo/', 2, true);
-    } catch (err) {
-        $('logo-status').className = 'text-sm text-center text-red-600';
-        $('logo-status').innerText = err.message;
-        return;
-    }
-    gantiLogo(btn, path);
+const isiLogo = pengaturGambar({
+    id: 'logo', kolom: 'logo_path', folder: 'logo', bawaan: DEFAULT_LOGO, nama: 'logo',
+    // PNG dipertahankan apa adanya agar latar transparan logo tidak hilang
+    unggahBerkas: file => unggah('dokumentasi', file, 'logo/', 2, true)
 });
 
-$('btn-logo-reset').addEventListener('click', e => {
-    if (!logoSekarang) return;
-    if (confirm('Kembalikan ke logo bawaan?')) gantiLogo(e.currentTarget, null);
+const isiLatar = pengaturGambar({
+    id: 'hero', kolom: 'hero_path', folder: 'hero', bawaan: 'assets/latar-islami.jpg', nama: 'latar beranda',
+    unggahBerkas: async file => {
+        const gambar = await kecilkanFoto(file, 1920);
+        const path = namaFotoAcak('hero');
+        await cek(db.storage.from('dokumentasi').upload(path, gambar, { contentType: 'image/jpeg' }), 'Gagal mengunggah gambar.');
+        return path;
+    }
 });
 
 $('form-pengaturan').addEventListener('submit', e => {

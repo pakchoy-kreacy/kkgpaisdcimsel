@@ -83,6 +83,9 @@ async function loadPengaturan() {
     isiDaftar(data.daftar_kelurahan, data.daftar_gugus);
     document.getElementById('filter-jenis').innerHTML = '<option value="">Semua Jenis</option>' +
         data.daftar_jenis_perangkat.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    if (data.hero_path) {
+        document.querySelector('.hero-bg').style.setProperty('--hero-gambar', `url("${publicUrl('dokumentasi', data.hero_path)}")`);
+    }
     if (data.logo_path) {
         const logo = publicUrl('dokumentasi', data.logo_path);
         document.getElementById('kkg-logo').src = logo;
