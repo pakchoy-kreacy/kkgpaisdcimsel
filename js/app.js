@@ -242,7 +242,38 @@ async function loadAnggota() {
     const gugus = [...new Set(data.map(a => a.gugus))].sort();
     document.getElementById('filter-gugus-anggota').innerHTML = '<option value="">Semua Gugus</option>' +
         gugus.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
-    renderAnggota();
+    renderAnggota(1);
+    renderRekapAnggota();
+}
+
+// ---------- Rekap beranda: status kepegawaian & sertifikasi ----------
+
+const URUTAN_STATUS = ['PNS', 'PPPK', 'Non ASN Sekolah Negeri', 'Non ASN Sekolah Swasta', 'GTT', 'GTY'];
+
+function barisRekap(label, jumlah, total, warna) {
+    const persen = total ? Math.round(jumlah / total * 100) : 0;
+    return `
+        <div>
+            <div class="flex justify-between items-baseline gap-3 text-sm">
+                <span class="text-slate-700">${escapeHtml(label)}</span>
+                <span><b class="text-slate-900">${jumlah}</b> <span class="text-slate-400 text-xs">(${persen}%)</span></span>
+            </div>
+            <div class="mt-1 h-2.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full ${warna}" style="width:${persen}%"></div></div>
+        </div>`;
+}
+
+function renderRekapAnggota() {
+    const total = dataAnggota.length;
+    const hitung = (kolom, nilai) => dataAnggota.filter(a => a[kolom] === nilai).length;
+    // status di luar daftar baku tetap ikut dihitung
+    const status = [...URUTAN_STATUS, ...new Set(dataAnggota.map(a => a.status).filter(st => !URUTAN_STATUS.includes(st)))];
+    document.getElementById('rekap-status').innerHTML = total
+        ? status.map(st => barisRekap(st, hitung('status', st), total, 'bg-emerald-500')).join('')
+        : '<p class="text-sm text-slate-400">Belum ada data anggota.</p>';
+    document.getElementById('rekap-sertifikasi').innerHTML = total
+        ? barisRekap('Sudah sertifikasi', hitung('sertifikasi', 'Sudah'), total, 'bg-emerald-500') +
+          barisRekap('Belum sertifikasi', hitung('sertifikasi', 'Belum'), total, 'bg-amber-400')
+        : '<p class="text-sm text-slate-400">Belum ada data anggota.</p>';
 }
 
 function badgeStatus(status) {
@@ -264,20 +295,32 @@ function avatarAnggota(a, ukuran) {
     return `<div class="${ukuran} rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">${escapeHtml(inisial)}</div>`;
 }
 
-function renderAnggota() {
+const PER_HALAMAN = 25;
+let halamanAnggota = 1;
+
+function renderAnggota(halaman = halamanAnggota) {
     const cari = document.getElementById('cari-anggota').value.toLowerCase();
     const gugus = document.getElementById('filter-gugus-anggota').value;
     const hasil = dataAnggota.filter(a =>
         (gugus === '' || a.gugus === gugus) &&
         (a.nama.toLowerCase().includes(cari) || a.sekolah.toLowerCase().includes(cari)));
 
-    document.getElementById('anggota-jumlah').innerText = `${hasil.length} anggota`;
+    const jumlahHalaman = Math.max(1, Math.ceil(hasil.length / PER_HALAMAN));
+    halamanAnggota = Math.min(Math.max(1, halaman), jumlahHalaman);
+    const awal = (halamanAnggota - 1) * PER_HALAMAN;
+    const tampil = hasil.slice(awal, awal + PER_HALAMAN);
+
+    document.getElementById('anggota-jumlah').innerText = hasil.length > PER_HALAMAN
+        ? `Menampilkan ${awal + 1}–${awal + tampil.length} dari ${hasil.length} anggota`
+        : `${hasil.length} anggota`;
+    renderPager(jumlahHalaman);
     const kosong = dataAnggota.length === 0 ? 'Belum ada anggota yang terdaftar.' : 'Anggota tidak ditemukan.';
     const badge = (cls, teks) => `<span class="px-2.5 py-1 ${cls} rounded-full text-xs font-bold whitespace-nowrap">${escapeHtml(teks)}</span>`;
 
-    document.getElementById('list-anggota').innerHTML = hasil.length ? hasil.map(a => `
+    document.getElementById('list-anggota').innerHTML = hasil.length ? tampil.map((a, i) => `
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
             <div class="flex items-start gap-3">
+                <span class="text-xs text-slate-400 w-6 shrink-0 pt-4 text-right">${awal + i + 1}</span>
                 ${avatarAnggota(a, 'w-12 h-12')}
                 <div class="font-bold text-slate-800 break-words min-w-0 flex-1 self-center">${escapeHtml(a.nama)}</div>
                 ${badge(badgeStatus(a.status), a.status)}
@@ -290,9 +333,9 @@ function renderAnggota() {
             </div>
         </div>`).join('') : pesanKosong(kosong);
 
-    document.getElementById('tabel-anggota').innerHTML = hasil.length ? hasil.map((a, i) => `
+    document.getElementById('tabel-anggota').innerHTML = hasil.length ? tampil.map((a, i) => `
         <tr class="border-b border-slate-100">
-            <td class="p-4">${i + 1}</td>
+            <td class="p-4">${awal + i + 1}</td>
             <td class="p-4 font-bold text-slate-800"><div class="flex items-center gap-3">${avatarAnggota(a, 'w-10 h-10')}<span>${escapeHtml(a.nama)}</span></div></td>
             <td class="p-4">${escapeHtml(a.sekolah)}</td>
             <td class="p-4">${escapeHtml(a.kelurahan)}</td>
@@ -301,6 +344,32 @@ function renderAnggota() {
             <td class="p-4">${badge(badgeSertifikasi(a.sertifikasi), a.sertifikasi)}</td>
             <td class="p-4 text-right"><button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button></td>
         </tr>`).join('') : `<tr><td colspan="8">${pesanKosong(kosong)}</td></tr>`;
+}
+
+function gantiHalamanAnggota(n) {
+    renderAnggota(n);
+    document.getElementById('anggota-jumlah').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Nomor halaman: selalu tampilkan halaman pertama, terakhir, dan dua di sekitar halaman aktif
+function renderPager(jumlah) {
+    const nav = document.getElementById('pager-anggota');
+    if (jumlah <= 1) {
+        nav.innerHTML = '';
+        return;
+    }
+    const nomor = [];
+    for (let n = 1; n <= jumlah; n++) {
+        if (n === 1 || n === jumlah || Math.abs(n - halamanAnggota) <= 1) nomor.push(n);
+        else if (nomor[nomor.length - 1] !== '…') nomor.push('…');
+    }
+    const tombol = (n, isi, label, aktif = false, mati = false) =>
+        `<button ${mati ? 'disabled' : `onclick="gantiHalamanAnggota(${n})"`} aria-label="${label}" ${aktif ? 'aria-current="page"' : ''}
+            class="min-w-11 h-11 px-3 rounded-xl text-sm font-semibold border ${aktif ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400'} disabled:opacity-40">${isi}</button>`;
+    nav.innerHTML =
+        tombol(halamanAnggota - 1, '<i class="fa-solid fa-chevron-left"></i>', 'Halaman sebelumnya', false, halamanAnggota === 1) +
+        nomor.map(n => n === '…' ? '<span class="px-1 text-slate-400">…</span>' : tombol(n, n, 'Halaman ' + n, n === halamanAnggota)).join('') +
+        tombol(halamanAnggota + 1, '<i class="fa-solid fa-chevron-right"></i>', 'Halaman berikutnya', false, halamanAnggota === jumlah);
 }
 
 // ---------- Perbaikan data oleh anggota (usulan, diterapkan pengurus) ----------
