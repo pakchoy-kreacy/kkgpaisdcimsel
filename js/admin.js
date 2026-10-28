@@ -25,7 +25,13 @@ let panelAktif = null;
 let sudahLogin = false;
 
 function tampil(nama) {
+    if (nama === 'beranda') nama = null;
     panelAktif = nama;
+    document.querySelectorAll('.nav-admin').forEach(b => {
+        if (b.dataset.open === (nama || 'beranda')) b.setAttribute('aria-current', 'page');
+        else b.removeAttribute('aria-current');
+    });
+    if (sudahLogin) muatBadge();
     $('admin-menu').classList.toggle('hidden', !sudahLogin || nama !== null);
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.toggle('hidden', !sudahLogin || p.id !== 'tab-' + nama));
     $('judul-halaman').innerText = nama ? JUDUL[nama] : 'Admin KKG PAI SD';
@@ -37,6 +43,11 @@ function showApp(login) {
     sudahLogin = login;
     $('sec-login').classList.toggle('hidden', login);
     $('btn-logout').classList.toggle('hidden', !login);
+    $('admin-sidebar').classList.toggle('lg:block', login);
+    $('admin-bottom').classList.toggle('hidden', !login);
+    // ruang untuk bar navigasi bawah di HP
+    $('admin-main').classList.toggle('pb-28', login);
+    $('admin-main').classList.toggle('lg:pb-10', login);
     tampil(null);
 }
 
@@ -45,6 +56,27 @@ $('btn-back').addEventListener('click', () => {
     else location.href = 'index.html';
 });
 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => tampil(b.dataset.open)));
+
+// Jumlah kiriman yang menunggu persetujuan, tampil sebagai lencana merah di navigasi
+async function muatBadge() {
+    for (const tabel of ['anggota', 'karya']) {
+        const { count } = await db.from(tabel).select('id', { count: 'exact', head: true }).eq('disetujui', false);
+        document.querySelectorAll(`[data-badge="${tabel}"]`).forEach(el => {
+            el.innerText = count > 99 ? '99+' : count;
+            el.classList.toggle('hidden', !count);
+        });
+    }
+}
+
+// Formulir tambah dipakai juga untuk edit: judul berganti dan tombol "Batal edit" muncul
+function modeEdit(form, row, judulTambah, judulEdit) {
+    form.dataset.editId = row ? row.id : '';
+    form.querySelector('h2').innerText = row ? judulEdit : judulTambah;
+    form.querySelector('[data-batal]').classList.toggle('hidden', !row);
+    form.classList.toggle('ring-2', !!row);
+    form.classList.toggle('ring-emerald-300', !!row);
+    if (row) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 // ---------- Pembantu: formulir, unggah, daftar, CSV ----------
 
@@ -228,10 +260,22 @@ const muatAgenda = buatDaftar('list-agenda', {
             </div>
             <div class="flex flex-col gap-2 shrink-0">
                 <button data-act="presensi" class="h-11 px-3 rounded-lg ${r.presensi_buka ? 'bg-amber-500 text-slate-900' : 'bg-emerald-600 text-white'} text-xs font-bold">${r.presensi_buka ? 'Tutup presensi' : 'Buka presensi'}</button>
+                <button data-act="edit" class="h-11 px-3 rounded-lg border border-emerald-600 text-emerald-700 text-xs font-bold">Edit</button>
                 ${tombolHapus}
             </div>
         </div>`,
     aksi: {
+        edit: async r => {
+            $('ag-judul').value = r.judul;
+            $('ag-kategori').value = r.kategori;
+            $('ag-tanggal').value = r.tanggal;
+            $('ag-waktu').value = r.waktu;
+            $('ag-lokasi').value = r.lokasi;
+            $('ag-deskripsi').value = r.deskripsi || '';
+            $('ag-buka').checked = r.presensi_buka;
+            modeEdit($('form-agenda'), r, 'Tambah Agenda', 'Edit Agenda');
+            return false;
+        },
         presensi: async r => cek(db.from('agenda').update({ presensi_buka: !r.presensi_buka }).eq('id', r.id), 'Gagal mengubah presensi.'),
         hapus: async r => {
             if (!confirm(`Hapus agenda "${r.judul}"? Data presensinya ikut terhapus.`)) return false;
@@ -239,18 +283,30 @@ const muatAgenda = buatDaftar('list-agenda', {
         }
     }
 });
-daftarMuat.agenda = muatAgenda;
+daftarMuat.agenda = () => {
+    $('form-agenda').reset();
+    modeEdit($('form-agenda'), null, 'Tambah Agenda');
+    muatAgenda();
+};
 
 $('form-agenda').addEventListener('submit', e => {
     e.preventDefault();
-    kirim(e.target, async () => {
-        await cek(db.from('agenda').insert({
+    const form = e.target;
+    const editId = form.dataset.editId;
+    kirim(form, async () => {
+        const row = {
             judul: $('ag-judul').value, kategori: $('ag-kategori').value, tanggal: $('ag-tanggal').value,
             waktu: $('ag-waktu').value, lokasi: $('ag-lokasi').value, deskripsi: $('ag-deskripsi').value,
             presensi_buka: $('ag-buka').checked
-        }), 'Gagal menyimpan.');
+        };
+        await cek(editId ? db.from('agenda').update(row).eq('id', editId) : db.from('agenda').insert(row), 'Gagal menyimpan.');
+        modeEdit(form, null, 'Tambah Agenda');
         muatAgenda();
     });
+});
+$('form-agenda').querySelector('[data-batal]').addEventListener('click', () => {
+    $('form-agenda').reset();
+    modeEdit($('form-agenda'), null, 'Tambah Agenda');
 });
 
 // ---------- Rekap presensi ----------
@@ -371,7 +427,7 @@ daftarMuat.karya = buatDaftar('list-karya', {
             </div>
         </div>`,
     aksi: {
-        setujui: async r => cek(db.from('karya').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'),
+        setujui: async r => { await cek(db.from('karya').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'); muatBadge(); },
         hapus: async r => {
             if (!confirm(`Hapus karya "${r.judul}"?`)) return false;
             await hapusBerkas('dokumentasi', r.sampul_path);
@@ -410,12 +466,30 @@ const muatPengurus = buatDaftar('list-pengurus', {
     kosong: 'Belum ada pengurus.',
     baris: r => `
         <div class="flex items-center gap-3">
+            <img src="${esc(r.foto_path ? urlPublik('dokumentasi', r.foto_path) : fotoAnggota(r))}" alt="" class="w-12 h-12 rounded-full object-cover bg-slate-100 shrink-0">
             <div class="min-w-0 flex-1">
                 <div class="font-semibold break-words">${esc(r.nama)}</div>
                 <div class="text-xs text-slate-500">${esc(r.jabatan)} • urutan ${r.urutan}</div>
-            </div>${tombolHapus}
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+                <button data-act="edit" class="h-11 px-3 rounded-lg border border-emerald-600 text-emerald-700 text-xs font-bold">Edit</button>
+                ${tombolHapus}
+            </div>
         </div>`,
     aksi: {
+        edit: async r => {
+            pengurusDiedit = r;
+            $('pg-nama').value = r.nama;
+            $('pg-jabatan').value = r.jabatan;
+            $('pg-urutan').value = r.urutan;
+            $('pg-foto').value = '';
+            $('pg-foto-hapus').checked = false;
+            $('pg-foto-hapus-label').classList.toggle('hidden', !r.foto_path);
+            $('pg-foto-preview').classList.toggle('hidden', !r.foto_path);
+            if (r.foto_path) $('pg-foto-preview').src = urlPublik('dokumentasi', r.foto_path);
+            modeEdit($('form-pengurus'), r, 'Tambah Pengurus', 'Edit Pengurus');
+            return false;
+        },
         hapus: async r => {
             if (!confirm(`Hapus pengurus "${r.nama}"?`)) return false;
             await hapusBerkas('dokumentasi', r.foto_path);
@@ -423,26 +497,51 @@ const muatPengurus = buatDaftar('list-pengurus', {
         }
     }
 });
-daftarMuat.pengurus = muatPengurus;
+daftarMuat.pengurus = () => {
+    selesaiEditPengurus();
+    muatPengurus();
+};
+
+let pengurusDiedit = null;
+
+function selesaiEditPengurus() {
+    pengurusDiedit = null;
+    $('form-pengurus').reset();
+    $('pg-urutan').value = 10;
+    $('pg-foto-preview').classList.add('hidden');
+    $('pg-foto-hapus-label').classList.add('hidden');
+    modeEdit($('form-pengurus'), null, 'Tambah Pengurus');
+}
+
+$('pg-foto').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    $('pg-foto-preview').src = URL.createObjectURL(file);
+    $('pg-foto-preview').classList.remove('hidden');
+    $('pg-foto-hapus').checked = false;
+});
 
 $('form-pengurus').addEventListener('submit', e => {
     e.preventDefault();
+    const lama = pengurusDiedit;
     kirim(e.target, async () => {
         const file = $('pg-foto').files[0];
-        const path = file ? await unggah('dokumentasi', file, 'pengurus/', 3, true) : null;
+        const pathBaru = file ? await unggah('dokumentasi', file, 'pengurus/', 3, true) : null;
+        // foto tetap, diganti, atau dihapus
+        const foto_path = pathBaru || (lama && !$('pg-foto-hapus').checked ? lama.foto_path : null);
+        const row = { nama: $('pg-nama').value, jabatan: $('pg-jabatan').value, urutan: Number($('pg-urutan').value) || 100, foto_path };
         try {
-            await cek(db.from('pengurus').insert({
-                nama: $('pg-nama').value, jabatan: $('pg-jabatan').value,
-                urutan: Number($('pg-urutan').value) || 100, foto_path: path
-            }), 'Gagal menyimpan.');
+            await cek(lama ? db.from('pengurus').update(row).eq('id', lama.id) : db.from('pengurus').insert(row), 'Gagal menyimpan.');
         } catch (err) {
-            await hapusBerkas('dokumentasi', path);
+            await hapusBerkas('dokumentasi', pathBaru);
             throw err;
         }
-        $('pg-urutan').value = 10;
+        if (lama && lama.foto_path && lama.foto_path !== foto_path) await hapusBerkas('dokumentasi', lama.foto_path);
+        selesaiEditPengurus();
         muatPengurus();
     });
 });
+$('form-pengurus').querySelector('[data-batal]').addEventListener('click', selesaiEditPengurus);
 
 // ---------- Anggota ----------
 
@@ -471,7 +570,7 @@ const muatAnggota = buatDaftar('list-anggota', {
         </div>`,
     aksi: {
         edit: async r => { bukaEditAnggota(r); return false; },
-        setujui: async r => cek(db.from('anggota').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'),
+        setujui: async r => { await cek(db.from('anggota').update({ disetujui: true }).eq('id', r.id), 'Gagal menyetujui.'); muatBadge(); },
         sertifikasi: async r => cek(db.from('anggota').update({ sertifikasi: r.sertifikasi === 'Sudah' ? 'Belum' : 'Sudah' }).eq('id', r.id), 'Gagal mengubah.'),
         hapus: async r => {
             if (!confirm(`Hapus data anggota "${r.nama}"?`)) return false;

@@ -8,7 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-admin[aria-current="page"] { color: #047857; font-weight: 700; }
+        aside .nav-admin[aria-current="page"] { background: #ecfdf5; }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
     <header class="sticky top-0 z-30 bg-white border-b border-emerald-100 px-4 h-14 flex justify-between items-center">
@@ -19,7 +23,23 @@
         <button id="btn-logout" class="hidden h-11 px-3 -mr-3 text-sm text-slate-600 hover:text-red-600"><i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar</button>
     </header>
 
-    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 pb-10">
+    <div class="lg:flex">
+        <aside id="admin-sidebar" class="hidden lg:block w-64 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto bg-white border-r border-slate-200 p-3 space-y-1">
+                <button data-open="beranda" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-table-cells-large w-5 text-center"></i><span class="flex-1 text-left">Beranda Admin</span></button>
+                <button data-open="anggota" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-users w-5 text-center"></i><span class="flex-1 text-left">Anggota</span><span data-badge="anggota" class="hidden  min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
+                <button data-open="karya" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-lightbulb w-5 text-center"></i><span class="flex-1 text-left">Karya Inovasi</span><span data-badge="karya" class="hidden  min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
+                <button data-open="agenda" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-calendar-days w-5 text-center"></i><span class="flex-1 text-left">Agenda</span></button>
+                <button data-open="presensi" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-clipboard-user w-5 text-center"></i><span class="flex-1 text-left">Rekap Presensi</span></button>
+                <button data-open="informasi" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-bullhorn w-5 text-center"></i><span class="flex-1 text-left">Informasi</span></button>
+                <button data-open="dokumentasi" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-images w-5 text-center"></i><span class="flex-1 text-left">Galeri</span></button>
+                <button data-open="perangkat" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-book-open w-5 text-center"></i><span class="flex-1 text-left">Perangkat Ajar</span></button>
+                <button data-open="pengurus" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-people-group w-5 text-center"></i><span class="flex-1 text-left">Pengurus</span></button>
+                <button data-open="aspirasi" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-comments w-5 text-center"></i><span class="flex-1 text-left">Masukan</span></button>
+                <button data-open="pengaturan" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-gear w-5 text-center"></i><span class="flex-1 text-left">Pengaturan</span></button>
+                <button data-open="akun" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-user-lock w-5 text-center"></i><span class="flex-1 text-left">Akun</span></button>
+        </aside>
+
+    <main id="admin-main" class="flex-1 min-w-0 max-w-4xl mx-auto p-4 sm:p-6 space-y-4 pb-10">
         <!-- Login -->
         <section id="sec-login" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 max-w-md mx-auto">
             <h2 class="font-bold text-lg mb-4">Masuk Pengurus</h2>
@@ -60,20 +80,22 @@
                     <span class="block font-bold text-slate-800 mt-2 leading-tight">Perangkat Ajar</span>
                     <span class="block text-xs text-slate-500 mt-0.5">Modul & berkas</span>
                 </button>
-                <button data-open="karya" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                <button data-open="karya" class="relative text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
                     <i class="fa-solid fa-lightbulb text-2xl text-emerald-600"></i>
                     <span class="block font-bold text-slate-800 mt-2 leading-tight">Karya Inovasi</span>
                     <span class="block text-xs text-slate-500 mt-0.5">Setujui kiriman guru</span>
+                    <span data-badge="karya" class="hidden absolute top-3 right-3 min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span>
                 </button>
                 <button data-open="pengurus" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
                     <i class="fa-solid fa-people-group text-2xl text-emerald-600"></i>
                     <span class="block font-bold text-slate-800 mt-2 leading-tight">Pengurus</span>
                     <span class="block text-xs text-slate-500 mt-0.5">Susunan pengurus</span>
                 </button>
-                <button data-open="anggota" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                <button data-open="anggota" class="relative text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
                     <i class="fa-solid fa-users text-2xl text-emerald-600"></i>
                     <span class="block font-bold text-slate-800 mt-2 leading-tight">Anggota</span>
                     <span class="block text-xs text-slate-500 mt-0.5">Setujui & kelola</span>
+                    <span data-badge="anggota" class="hidden absolute top-3 right-3 min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span>
                 </button>
                 <button data-open="aspirasi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
                     <i class="fa-solid fa-comments text-2xl text-emerald-600"></i>
@@ -120,7 +142,10 @@
 
         <div id="tab-agenda" class="admin-panel hidden space-y-4">
             <form id="form-agenda" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                <h2 class="font-bold text-base">Tambah Agenda</h2>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-base">Tambah Agenda</h2>
+                    <button type="button" data-batal class="hidden h-11 px-3 text-sm text-slate-600">Batal edit</button>
+                </div>
                 <label class="block text-sm font-semibold text-slate-700">Judul kegiatan<span class="block mt-1"><input id="ag-judul" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><div class="grid grid-cols-2 gap-3"><label class="block text-sm font-semibold text-slate-700">Kategori<span class="block mt-1"><select id="ag-kategori" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"><option>Kreatif</option><option>Edukatif</option><option>Religius</option><option>Empati</option><option>Nalar Digital</option><option>Rutin</option><option>Lainnya</option></select></span></label><label class="block text-sm font-semibold text-slate-700">Tanggal<span class="block mt-1"><input id="ag-tanggal" type="date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label></div><label class="block text-sm font-semibold text-slate-700">Waktu<span class="block mt-1"><input id="ag-waktu" type="text" maxlength="50" placeholder="08.00 - 12.00 WIB" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Lokasi<span class="block mt-1"><input id="ag-lokasi" type="text" required maxlength="200" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Deskripsi<span class="block mt-1"><textarea id="ag-deskripsi" rows="3" maxlength="1000" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label><label class="flex items-center gap-3 min-h-11 text-sm font-semibold text-slate-700"><input id="ag-buka" type="checkbox" class="w-5 h-5 accent-emerald-600">Buka presensi sekarang</label>
                 <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Agenda</button>
                 <p id="form-agenda-status" class="text-sm text-center hidden"></p>
@@ -158,8 +183,16 @@
 
         <div id="tab-pengurus" class="admin-panel hidden space-y-4">
             <form id="form-pengurus" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                <h2 class="font-bold text-base">Tambah Pengurus</h2>
-                <label class="block text-sm font-semibold text-slate-700">Nama<span class="block mt-1"><input id="pg-nama" type="text" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Jabatan<span class="block mt-1"><input id="pg-jabatan" type="text" required maxlength="100" placeholder="Ketua, Sekretaris, ..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Urutan tampil<span class="block text-xs font-normal text-slate-500 mt-0.5">Angka kecil tampil lebih dulu</span><span class="block mt-1"><input id="pg-urutan" type="number" min="1" max="999" value="10" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Foto (opsional)<span class="block text-xs font-normal text-slate-500 mt-0.5">JPG atau PNG, maksimal 3 MB</span><span class="block mt-1"><input id="pg-foto" type="file" accept="image/jpeg,image/png" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-base">Tambah Pengurus</h2>
+                    <button type="button" data-batal class="hidden h-11 px-3 text-sm text-slate-600">Batal edit</button>
+                </div>
+                <label class="block text-sm font-semibold text-slate-700">Nama<span class="block mt-1"><input id="pg-nama" type="text" required maxlength="150" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Jabatan<span class="block mt-1"><input id="pg-jabatan" type="text" required maxlength="100" placeholder="Ketua, Sekretaris, ..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><label class="block text-sm font-semibold text-slate-700">Urutan tampil<span class="block text-xs font-normal text-slate-500 mt-0.5">Angka kecil tampil lebih dulu</span><span class="block mt-1"><input id="pg-urutan" type="number" min="1" max="999" value="10" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label><div class="flex items-center gap-4">
+                    <img id="pg-foto-preview" alt="" class="hidden w-16 h-16 rounded-full object-cover border border-slate-200 bg-slate-100 shrink-0">
+                    <div class="min-w-0 flex-1 space-y-2"><label class="block text-sm font-semibold text-slate-700">Foto (opsional)<span class="block text-xs font-normal text-slate-500 mt-0.5">JPG atau PNG, maksimal 3 MB</span><span class="block mt-1"><input id="pg-foto" type="file" accept="image/jpeg,image/png" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></span></label>
+                        <label id="pg-foto-hapus-label" class="hidden flex items-center gap-2 min-h-11 text-sm text-slate-700"><input id="pg-foto-hapus" type="checkbox" class="w-5 h-5 accent-red-600">Hapus foto</label>
+                    </div>
+                </div>
                 <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengurus</button>
                 <p id="form-pengurus-status" class="text-sm text-center hidden"></p>
             </form>
@@ -252,7 +285,7 @@
                     <label class="block text-sm font-semibold text-slate-700">Daftar Kelurahan<span class="block text-xs font-normal text-slate-500 mt-0.5">Satu nama per baris</span><span class="block mt-1"><textarea id="set-daftar_kelurahan" rows="5" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
                     <label class="block text-sm font-semibold text-slate-700">Jenis Perangkat Ajar<span class="block text-xs font-normal text-slate-500 mt-0.5">Satu jenis per baris. Dipakai di filter dan formulir perangkat ajar.</span><span class="block mt-1"><textarea id="set-daftar_jenis_perangkat" rows="11" required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea></span></label>
                 </section>
-                <div class="sticky bottom-4 z-30">
+                <div class="sticky bottom-20 lg:bottom-4 z-30">
                     <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60 shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pengaturan</button>
                 </div>
                 <p id="form-pengaturan-status" class="text-sm text-center hidden"></p>
@@ -294,6 +327,18 @@
             </form>
         </div>
     </main>
+    </div>
+
+    <!-- Bar navigasi bawah (HP & tablet) -->
+    <nav id="admin-bottom" class="hidden lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200" style="padding-bottom: env(safe-area-inset-bottom)">
+        <div class="grid grid-cols-5">
+            <button data-open="beranda" class="nav-admin relative h-16 flex flex-col items-center justify-center gap-1 text-[11px] text-slate-500"><i class="fa-solid fa-table-cells-large text-lg"></i>Beranda</button>
+            <button data-open="anggota" class="nav-admin relative h-16 flex flex-col items-center justify-center gap-1 text-[11px] text-slate-500"><i class="fa-solid fa-users text-lg"></i>Anggota<span data-badge="anggota" class="hidden absolute top-1.5 left-1/2 ml-2 min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
+            <button data-open="agenda" class="nav-admin relative h-16 flex flex-col items-center justify-center gap-1 text-[11px] text-slate-500"><i class="fa-solid fa-calendar-days text-lg"></i>Agenda</button>
+            <button data-open="presensi" class="nav-admin relative h-16 flex flex-col items-center justify-center gap-1 text-[11px] text-slate-500"><i class="fa-solid fa-clipboard-user text-lg"></i>Presensi</button>
+            <button data-open="karya" class="nav-admin relative h-16 flex flex-col items-center justify-center gap-1 text-[11px] text-slate-500"><i class="fa-solid fa-lightbulb text-lg"></i>Karya<span data-badge="karya" class="hidden absolute top-1.5 left-1/2 ml-2 min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
+        </div>
+    </nav>
 
     <script src="js/config.js"></script>
     <script src="js/admin.js"></script>
