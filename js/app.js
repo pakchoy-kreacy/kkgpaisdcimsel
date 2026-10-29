@@ -568,6 +568,119 @@ async function submitKarya(e) {
     showToast('Karya terkirim. Tampil setelah diperiksa pengurus.');
 }
 
+// ---------- Jadwal sholat (dihitung di perangkat, kriteria Kemenag) ----------
+
+const LOKASI_SHOLAT = { lintang: -6.8985, bujur: 107.5450 }; // Kecamatan Cimahi Selatan
+const ZONA = 'Asia/Jakarta';
+const jamWIB = d => d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: ZONA });
+const hijriah = (d, opsi) => new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura-nu-latn', opsi).format(d);
+
+function waktuSholat(tanggal) {
+    const p = adhan.CalculationMethod.Other();
+    p.fajrAngle = 20;
+    p.ishaAngle = 18;
+    p.madhab = adhan.Madhab.Shafi;
+    p.adjustments = { fajr: 2, sunrise: -2, dhuhr: 2, asr: 2, maghrib: 2, isha: 2 }; // ihtiyat 2 menit
+    return new adhan.PrayerTimes(new adhan.Coordinates(LOKASI_SHOLAT.lintang, LOKASI_SHOLAT.bujur), tanggal, p);
+}
+
+function renderSholat() {
+    const list = document.getElementById('sholat-list');
+    if (!window.adhan) {
+        list.innerHTML = '<li class="py-3 text-sm text-slate-400">Jadwal sholat gagal dimuat. Periksa koneksi internet.</li>';
+        return;
+    }
+    const sekarang = new Date();
+    const t = waktuSholat(sekarang);
+    const baris = [['Subuh', t.fajr], ['Terbit', t.sunrise], ['Dzuhur', t.dhuhr], ['Ashar', t.asr], ['Maghrib', t.maghrib], ['Isya', t.isha]];
+
+    // Sholat berikutnya; setelah Isya, berikutnya Subuh besok
+    let berikut = baris.find(([nama, w]) => nama !== 'Terbit' && w > sekarang);
+    if (!berikut) {
+        const besok = new Date(sekarang);
+        besok.setDate(besok.getDate() + 1);
+        berikut = ['Subuh', waktuSholat(besok).fajr];
+    }
+    const menit = Math.max(0, Math.round((berikut[1] - sekarang) / 60000));
+    const sisa = menit >= 60 ? `${Math.floor(menit / 60)} jam ${menit % 60} menit` : `${menit} menit`;
+
+    document.getElementById('sholat-tanggal').innerText =
+        `${sekarang.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • ${hijriah(sekarang, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    document.getElementById('sholat-berikut').innerHTML = `<i class="fa-regular fa-clock mr-2"></i>Menuju ${berikut[0]}: ${sisa} lagi`;
+    list.innerHTML = baris.map(([nama, w]) => {
+        const aktif = nama === berikut[0] && w.getTime() === berikut[1].getTime();
+        return `<li class="flex justify-between items-center py-2.5 ${aktif ? 'text-emerald-700 font-bold' : nama === 'Terbit' ? 'text-slate-400 text-sm' : 'text-slate-700'}">
+            <span>${aktif ? '<i class="fa-solid fa-circle text-[8px] mr-2 align-middle"></i>' : ''}${nama}</span>
+            <span class="tabular-nums">${jamWIB(w)}</span>
+        </li>`;
+    }).join('');
+}
+
+// ---------- Kalender kegiatan (Masehi + Hijriah, titik untuk hari ber-agenda) ----------
+
+let dataAgenda = [];
+let bulanKalender = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let tanggalDipilih = null;
+
+function geserBulan(n) {
+    bulanKalender = new Date(bulanKalender.getFullYear(), bulanKalender.getMonth() + n, 1);
+    tanggalDipilih = null;
+    renderKalender();
+}
+
+function pilihTanggal(iso) {
+    tanggalDipilih = tanggalDipilih === iso ? null : iso;
+    renderKalender();
+}
+
+function renderKalender() {
+    const th = bulanKalender.getFullYear();
+    const bl = bulanKalender.getMonth();
+    const jumlahHari = new Date(th, bl + 1, 0).getDate();
+    const hari = hariIni();
+    const adaAgenda = new Set(dataAgenda.map(a => a.tanggal));
+
+    document.getElementById('kal-judul').innerText = bulanKalender.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const hAwal = hijriah(new Date(th, bl, 1), { month: 'long', year: 'numeric' });
+    const hAkhir = hijriah(new Date(th, bl, jumlahHari), { month: 'long', year: 'numeric' });
+    document.getElementById('kal-hijriah').innerText = hAwal === hAkhir ? hAwal : `${hAwal.replace(/ \d+ H$/, '')} – ${hAkhir}`;
+
+    let sel = '<div></div>'.repeat(new Date(th, bl, 1).getDay());
+    for (let d = 1; d <= jumlahHari; d++) {
+        const tgl = new Date(th, bl, d);
+        const iso = tgl.toLocaleDateString('sv-SE');
+        const hariKe = tgl.getDay();
+        const dipilih = iso === tanggalDipilih;
+        const warna = dipilih ? 'bg-emerald-600 text-white' : iso === hari ? 'ring-2 ring-emerald-500 text-emerald-800' : hariKe === 0 ? 'text-red-500' : hariKe === 5 ? 'text-emerald-700' : 'text-slate-700';
+        sel += `<button type="button" onclick="pilihTanggal('${iso}')" aria-label="${tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}${adaAgenda.has(iso) ? ', ada agenda' : ''}"
+            class="relative min-h-12 rounded-lg flex flex-col items-center justify-center ${dipilih ? '' : 'hover:bg-emerald-50'} ${warna}">
+            <span class="text-sm font-semibold leading-none">${d}</span>
+            <span class="text-[10px] leading-none mt-1 ${dipilih ? 'text-emerald-100' : 'text-slate-400'}">${hijriah(tgl, { day: 'numeric' })}</span>
+            ${adaAgenda.has(iso) ? `<span class="absolute bottom-1 w-1.5 h-1.5 rounded-full ${dipilih ? 'bg-white' : 'bg-amber-500'}"></span>` : ''}
+        </button>`;
+    }
+    document.getElementById('kal-grid').innerHTML = sel;
+
+    // Agenda pada tanggal dipilih, atau semua agenda bulan ini
+    const awalBulan = new Date(th, bl, 1).toLocaleDateString('sv-SE');
+    const akhirBulan = new Date(th, bl, jumlahHari).toLocaleDateString('sv-SE');
+    const daftar = dataAgenda
+        .filter(a => tanggalDipilih ? a.tanggal === tanggalDipilih : a.tanggal >= awalBulan && a.tanggal <= akhirBulan)
+        .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+    const judul = tanggalDipilih
+        ? new Date(tanggalDipilih + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
+        : 'Agenda bulan ini';
+    document.getElementById('kal-agenda').innerHTML = `<p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${escapeHtml(judul)}</p>` +
+        (daftar.length ? daftar.map(a => `
+            <button type="button" onclick="switchTab('program')" class="w-full text-left flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-emerald-400">
+                <span class="w-11 shrink-0 text-center text-emerald-800"><b class="block text-lg leading-none">${new Date(a.tanggal + 'T00:00:00').getDate()}</b><span class="text-[10px] uppercase">${new Date(a.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { month: 'short' })}</span></span>
+                <span class="min-w-0">
+                    <span class="block font-semibold text-slate-800 break-words">${escapeHtml(a.judul)}</span>
+                    <span class="block text-xs text-slate-500">${escapeHtml(a.waktu || 'Waktu menyusul')} • ${escapeHtml(a.lokasi)}</span>
+                </span>
+            </button>`).join('') : `<p class="text-sm text-slate-400">${tanggalDipilih ? 'Tidak ada agenda di tanggal ini.' : 'Belum ada agenda bulan ini.'}</p>`);
+}
+
 // ---------- Agenda & presensi ----------
 
 async function loadAgenda() {
@@ -578,6 +691,8 @@ async function loadAgenda() {
         list.innerHTML = pesanKosong('Gagal memuat agenda.');
         return;
     }
+    dataAgenda = data;
+    renderKalender();
     if (data.length === 0) {
         list.innerHTML = pesanKosong('Belum ada agenda kegiatan.');
     } else {
@@ -730,6 +845,9 @@ window.onload = function() {
     loadAnggota();
     loadPerangkat();
     loadKarya();
+    renderSholat();
+    setInterval(renderSholat, 30000);
+    renderKalender();
     loadAgenda();
     loadInformasi();
     loadDokumentasi();
