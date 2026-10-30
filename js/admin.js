@@ -601,9 +601,9 @@ $('form-pengurus').querySelector('[data-batal]').addEventListener('click', seles
 let dataAnggota = [];
 
 const muatAnggota = buatDaftar('list-anggota', {
-    // yang menunggu persetujuan tampil paling atas
-    muat: async () => (await cek(db.from('anggota').select('*').order('created_at', { ascending: false }), 'Gagal memuat.'))
-        .sort((a, b) => a.disetujui - b.disetujui),
+    // yang menunggu persetujuan di atas, lalu urut alfabet nama
+    muat: async () => (await cek(db.from('anggota').select('*'), 'Gagal memuat.'))
+        .sort((a, b) => (a.disetujui - b.disetujui) || urutNama(a, b)),
     kosong: 'Belum ada anggota.',
     perHalaman: 25,
     cari: 'cari-anggota-admin',

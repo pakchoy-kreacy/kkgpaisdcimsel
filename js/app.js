@@ -241,7 +241,7 @@ async function loadAnggota() {
         document.getElementById('list-anggota').innerHTML = pesanKosong('Gagal memuat anggota.');
         return;
     }
-    dataAnggota = data;
+    dataAnggota = data.sort(urutNama);
     const gugus = [...new Set(data.map(a => a.gugus))].sort();
     document.getElementById('filter-gugus-anggota').innerHTML = '<option value="">Semua Gugus</option>' +
         gugus.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');

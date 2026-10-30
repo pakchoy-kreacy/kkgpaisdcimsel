@@ -21,3 +21,12 @@ async function kecilkanFoto(file, sisiMaks = 600) {
 function namaFotoAcak(folder) {
     return `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
 }
+
+// Urutan alfabet nama; gelar di depan (H., Hj., Drs., Dra., Dr., Ust.) diabaikan agar "H. Abdullah" ada di huruf A
+function kunciNama(nama) {
+    return nama.trim().replace(/^((hj?|drs?|dra|ust|ustadz|ustadzah|kh|prof|ir)\.?\s+)+/i, '');
+}
+
+function urutNama(a, b) {
+    return kunciNama(a.nama).localeCompare(kunciNama(b.nama), 'id', { sensitivity: 'base' });
+}
