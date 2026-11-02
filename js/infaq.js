@@ -7,8 +7,8 @@ const TW = ['tw1', 'tw2', 'tw3', 'tw4'];
 function isiPilihanTahun() {
     const sel = document.getElementById('infaq-tahun');
     if (sel.options.length) return;
-    const ini = new Date().getFullYear();
-    for (let t = ini; t >= 2025; t--) sel.add(new Option(t, t));
+    for (let t = 2025; t <= 2030; t++) sel.add(new Option(t, t));
+    sel.value = Math.min(Math.max(new Date().getFullYear(), 2025), 2030);
 }
 
 async function muatInfaq() {

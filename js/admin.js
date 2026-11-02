@@ -715,8 +715,8 @@ const KOLOM_TW = ['tw1', 'tw2', 'tw3', 'tw4'];
 daftarMuat.infaq = async () => {
     const selTahun = $('adm-infaq-tahun');
     if (!selTahun.options.length) {
-        for (let t = new Date().getFullYear() + 1; t >= 2025; t--) selTahun.add(new Option(t, t));
-        selTahun.value = new Date().getFullYear();
+        for (let t = 2025; t <= 2030; t++) selTahun.add(new Option(t, t));
+        selTahun.value = Math.min(Math.max(new Date().getFullYear(), 2025), 2030);
     }
     const [anggota, peng] = await Promise.all([
         cek(db.from('anggota').select('id, nama, sekolah, gugus, status').eq('disetujui', true), 'Gagal memuat anggota.'),
