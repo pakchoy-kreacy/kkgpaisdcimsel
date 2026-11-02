@@ -27,6 +27,7 @@
         <aside id="admin-sidebar" class="hidden lg:block w-64 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto bg-white border-r border-slate-200 p-3 space-y-1">
                 <button data-open="beranda" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-table-cells-large w-5 text-center"></i><span class="flex-1 text-left">Beranda Admin</span></button>
                 <button data-open="anggota" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-users w-5 text-center"></i><span class="flex-1 text-left">Anggota</span><span data-badge="anggota" class="hidden  min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
+                <button data-open="infaq" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-hand-holding-heart w-5 text-center"></i><span class="flex-1 text-left">Infaq</span></button>
                 <button data-open="karya" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-lightbulb w-5 text-center"></i><span class="flex-1 text-left">Karya Inovasi</span><span data-badge="karya" class="hidden  min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span></button>
                 <button data-open="agenda" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-calendar-days w-5 text-center"></i><span class="flex-1 text-left">Agenda</span></button>
                 <button data-open="presensi" class="nav-admin w-full h-11 px-3 rounded-lg flex items-center gap-3 text-sm text-slate-600 hover:bg-emerald-50"><i class="fa-solid fa-clipboard-user w-5 text-center"></i><span class="flex-1 text-left">Rekap Presensi</span></button>
@@ -96,6 +97,11 @@
                     <span class="block font-bold text-slate-800 mt-2 leading-tight">Anggota</span>
                     <span class="block text-xs text-slate-500 mt-0.5">Setujui & kelola</span>
                     <span data-badge="anggota" class="hidden absolute top-3 right-3 min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-5 text-center"></span>
+                </button>
+                <button data-open="infaq" class="relative text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
+                    <i class="fa-solid fa-hand-holding-heart text-2xl text-emerald-600"></i>
+                    <span class="block font-bold text-slate-800 mt-2 leading-tight">Infaq</span>
+                    <span class="block text-xs text-slate-500 mt-0.5">Isi pembayaran per TW</span>
                 </button>
                 <button data-open="aspirasi" class="text-left bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[104px] hover:border-emerald-400 active:bg-emerald-50 transition">
                     <i class="fa-solid fa-comments text-2xl text-emerald-600"></i>
@@ -350,6 +356,24 @@
                 <button type="submit" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Karya</button>
                 <p id="form-karya-status" class="text-sm text-center hidden"></p>
             </form>
+        </div>
+
+        <div id="tab-infaq" class="admin-panel hidden space-y-4">
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="block text-sm font-semibold text-slate-700">Tahun<select id="adm-infaq-tahun" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></label>
+                    <label class="block text-sm font-semibold text-slate-700">Gugus<select id="adm-infaq-gugus" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></label>
+                </div>
+                <label class="block text-sm font-semibold text-slate-700">Koordinator gugus ini
+                    <select id="adm-infaq-koordinator" class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select>
+                </label>
+                <input id="adm-infaq-cari" type="search" placeholder="Cari nama atau sekolah..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                <p class="text-xs text-slate-500">Ketuk TW untuk menandai sudah bayar. Setiap perubahan langsung tersimpan.</p>
+            </section>
+            <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base mb-1">Anggota <span id="adm-infaq-total" class="font-normal text-slate-500"></span></h2>
+                <ul id="adm-infaq-list" class="divide-y divide-slate-100 text-sm"></ul>
+            </section>
         </div>
     </main>
     </div>

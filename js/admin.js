@@ -18,7 +18,7 @@ function tgl(iso) {
 
 const JUDUL = {
     dokumentasi: 'Galeri', informasi: 'Informasi', agenda: 'Agenda', presensi: 'Rekap Presensi',
-    perangkat: 'Perangkat Ajar', karya: 'Karya Inovasi', pengurus: 'Pengurus', anggota: 'Anggota', aspirasi: 'Masukan',
+    perangkat: 'Perangkat Ajar', karya: 'Karya Inovasi', pengurus: 'Pengurus', anggota: 'Anggota', infaq: 'Infaq', aspirasi: 'Masukan',
     pengaturan: 'Pengaturan', akun: 'Akun'
 };
 let panelAktif = null;
@@ -706,6 +706,135 @@ const muatUsulan = buatDaftar('list-usulan', {
         $('usulan-total').innerText = data.length ? `(${data.length})` : '';
     }
 });
+
+// ---------- Infaq: centang TW per anggota, simpan langsung ----------
+
+const infaqAdm = { anggota: [], bayar: new Map(), koordinator: {}, siap: false };
+const KOLOM_TW = ['tw1', 'tw2', 'tw3', 'tw4'];
+
+daftarMuat.infaq = async () => {
+    const selTahun = $('adm-infaq-tahun');
+    if (!selTahun.options.length) {
+        for (let t = new Date().getFullYear() + 1; t >= 2025; t--) selTahun.add(new Option(t, t));
+        selTahun.value = new Date().getFullYear();
+    }
+    const [anggota, peng] = await Promise.all([
+        cek(db.from('anggota').select('id, nama, sekolah, gugus, status').eq('disetujui', true), 'Gagal memuat anggota.'),
+        cek(db.from('pengaturan').select('daftar_gugus, koordinator_gugus').eq('id', 1).single(), 'Gagal memuat pengaturan.')
+    ]);
+    infaqAdm.anggota = anggota.sort(urutNama);
+    infaqAdm.koordinator = peng.koordinator_gugus || {};
+    const lain = [...new Set(anggota.map(a => a.gugus))].filter(g => !peng.daftar_gugus.includes(g)).sort();
+    const selGugus = $('adm-infaq-gugus');
+    const dipilih = selGugus.value;
+    selGugus.innerHTML = [...peng.daftar_gugus, ...lain].map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+    if (dipilih) selGugus.value = dipilih;
+    await muatBayarInfaq();
+};
+
+async function muatBayarInfaq() {
+    const data = await cek(db.from('infaq').select('*').eq('tahun', Number($('adm-infaq-tahun').value)), 'Gagal memuat infaq.');
+    infaqAdm.bayar = new Map(data.map(b => [b.anggota_id, b]));
+    renderInfaqAdmin();
+}
+
+function renderInfaqAdmin() {
+    const gugus = $('adm-infaq-gugus').value;
+    const cari = $('adm-infaq-cari').value.trim().toLowerCase();
+    const diGugus = infaqAdm.anggota.filter(a => a.gugus === gugus);
+    const tampil = diGugus.filter(a => !cari || a.nama.toLowerCase().includes(cari) || a.sekolah.toLowerCase().includes(cari));
+
+    // Koordinator dipilih dari anggota gugus ini
+    const koor = infaqAdm.koordinator[gugus] || '';
+    const pilihan = diGugus.map(a => a.nama);
+    if (koor && !pilihan.includes(koor)) pilihan.unshift(koor);
+    $('adm-infaq-koordinator').innerHTML = '<option value="">(belum ditentukan)</option>' +
+        pilihan.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    $('adm-infaq-koordinator').value = koor;
+
+    const lunas = diGugus.filter(a => KOLOM_TW.every(tw => infaqAdm.bayar.get(a.id)?.[tw])).length;
+    $('adm-infaq-total').innerText = `(${diGugus.length} orang, ${lunas} lunas 4 TW)`;
+    $('adm-infaq-list').innerHTML = tampil.length ? tampil.map((a, i) => {
+        const b = infaqAdm.bayar.get(a.id) || {};
+        return `<li class="py-3" data-anggota="${a.id}">
+            <div class="flex items-start gap-3">
+                <span class="w-6 shrink-0 text-right text-xs text-slate-400 pt-0.5">${i + 1}</span>
+                <div class="min-w-0 flex-1">
+                    <div class="font-semibold break-words">${esc(a.nama)}</div>
+                    <div class="text-xs text-slate-500">${esc(a.sekolah)} • ${esc(a.status)}</div>
+                    <div class="grid grid-cols-4 gap-2 mt-2">${KOLOM_TW.map((tw, j) => `
+                        <button type="button" data-tw="${tw}" aria-pressed="${!!b[tw]}" class="h-11 rounded-xl text-xs font-bold border ${b[tw] ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-500'}">${b[tw] ? '<i class="fa-solid fa-check mr-1"></i>' : ''}TW ${j + 1}</button>`).join('')}
+                    </div>
+                    <input data-ket type="text" maxlength="300" value="${esc(b.keterangan || '')}" placeholder="Keterangan (tidak wajib)" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-base">
+                    <p data-status class="text-xs text-slate-400 mt-1 h-4"></p>
+                </div>
+            </div>
+        </li>`;
+    }).join('') : '<li class="py-3 text-slate-400">Tidak ada anggota di gugus ini.</li>';
+}
+
+async function simpanInfaq(li, ubah) {
+    const id = Number(li.dataset.anggota);
+    const tahun = Number($('adm-infaq-tahun').value);
+    const lama = infaqAdm.bayar.get(id) || { anggota_id: id, tahun, tw1: false, tw2: false, tw3: false, tw4: false, keterangan: null };
+    const baru = { ...lama, ...ubah, anggota_id: id, tahun, updated_at: new Date().toISOString() };
+    const status = li.querySelector('[data-status]');
+    status.className = 'text-xs text-slate-400 mt-1 h-4';
+    status.innerText = 'Menyimpan...';
+    const { error } = await db.from('infaq').upsert(baru, { onConflict: 'anggota_id,tahun' });
+    if (error) {
+        console.error(error);
+        status.className = 'text-xs text-red-600 mt-1 h-4';
+        status.innerText = 'Gagal menyimpan. ' + error.message;
+        return false;
+    }
+    infaqAdm.bayar.set(id, baru);
+    status.innerText = 'Tersimpan';
+    return true;
+}
+
+$('adm-infaq-list').addEventListener('click', async e => {
+    const btn = e.target.closest('[data-tw]');
+    if (!btn) return;
+    const li = btn.closest('[data-anggota]');
+    const tw = btn.dataset.tw;
+    const nilai = btn.getAttribute('aria-pressed') !== 'true';
+    btn.disabled = true;
+    if (await simpanInfaq(li, { [tw]: nilai })) {
+        btn.setAttribute('aria-pressed', String(nilai));
+        btn.className = `h-11 rounded-xl text-xs font-bold border ${nilai ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-500'}`;
+        btn.innerHTML = `${nilai ? '<i class="fa-solid fa-check mr-1"></i>' : ''}TW ${tw.slice(2)}`;
+        const gugus = $('adm-infaq-gugus').value;
+        const diGugus = infaqAdm.anggota.filter(a => a.gugus === gugus);
+        const lunas = diGugus.filter(a => KOLOM_TW.every(k => infaqAdm.bayar.get(a.id)?.[k])).length;
+        $('adm-infaq-total').innerText = `(${diGugus.length} orang, ${lunas} lunas 4 TW)`;
+    }
+    btn.disabled = false;
+});
+
+$('adm-infaq-list').addEventListener('change', e => {
+    if (!e.target.matches('[data-ket]')) return;
+    simpanInfaq(e.target.closest('[data-anggota]'), { keterangan: e.target.value.trim() || null });
+});
+
+$('adm-infaq-koordinator').addEventListener('change', async e => {
+    const gugus = $('adm-infaq-gugus').value;
+    const baru = { ...infaqAdm.koordinator };
+    if (e.target.value) baru[gugus] = e.target.value;
+    else delete baru[gugus];
+    const { error } = await db.from('pengaturan').update({ koordinator_gugus: baru }).eq('id', 1);
+    if (error) {
+        console.error(error);
+        alert('Gagal menyimpan koordinator: ' + error.message);
+        e.target.value = infaqAdm.koordinator[gugus] || '';
+        return;
+    }
+    infaqAdm.koordinator = baru;
+});
+
+$('adm-infaq-tahun').addEventListener('change', () => muatBayarInfaq());
+$('adm-infaq-gugus').addEventListener('change', () => { $('adm-infaq-cari').value = ''; renderInfaqAdmin(); });
+$('adm-infaq-cari').addEventListener('input', renderInfaqAdmin);
 
 // ---------- Edit anggota ----------
 
