@@ -573,7 +573,60 @@ async function submitKarya(e) {
 const LOKASI_SHOLAT = { lintang: -6.8985, bujur: 107.5450 }; // Kecamatan Cimahi Selatan
 const ZONA = 'Asia/Jakarta';
 const jamWIB = d => d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: ZONA });
-const hijriah = (d, opsi) => new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura-nu-latn', opsi).format(d);
+// Tanggal Hijriah. Browser yang mendukung kalender Ummul Qura dipakai; browser lain (sebagian HP Android)
+// diam-diam memakai kalender Masehi, jadi di sana dipakai tabel Ummul Qura di bawah.
+// Nama bulan selalu dari daftar ini agar sama di semua perangkat.
+const BULAN_HIJRIAH = ['Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir', 'Jumadilawal', 'Jumadilakhir',
+    'Rajab', 'Syakban', 'Ramadan', 'Syawal', 'Zulkaidah', 'Zulhijah'];
+
+const formatUmmulQura = (() => {
+    try {
+        const f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' });
+        const tahun = Number(f.formatToParts(new Date(2026, 9, 29)).find(p => p.type === 'year').value);
+        return f.resolvedOptions().calendar.startsWith('islamic') && tahun > 1400 && tahun < 1500 ? f : null;
+    } catch (e) {
+        return null;
+    }
+})();
+
+// Tabel Ummul Qura 1446–1465 H (dibuat dari kalender Ummul Qura ICU): awal Muharram 1446 sebagai
+// nomor hari Julian, lalu panjang tiap bulan berurutan, 1 = 30 hari, 0 = 29 hari.
+const UMMUL_QURA = { tahun: 1446, jdAwal: 2460499, panjang: '011101100100101110101010010110110101001010110110101001010110111001001101101100100101101101010010101101101010010110101101001010101110100100101111010010010111011001001011011010100101011010101100101011010110010101011101010010011101101001001101' };
+
+function jdLokal(d) {
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000) + 2440588;
+}
+
+function hijriTabel(d) {
+    let sisa = jdLokal(d) - UMMUL_QURA.jdAwal;
+    if (sisa < 0) return null;
+    for (let i = 0; i < UMMUL_QURA.panjang.length; i++) {
+        const panjang = UMMUL_QURA.panjang[i] === '1' ? 30 : 29;
+        if (sisa < panjang) return { hari: sisa + 1, bulan: i % 12 + 1, tahun: UMMUL_QURA.tahun + Math.floor(i / 12) };
+        sisa -= panjang;
+    }
+    return null;
+}
+
+// Cadangan terakhir di luar rentang tabel: kalender Hijriah tabular (bisa selisih 1 hari)
+function hijriTabular(d) {
+    let l = jdLokal(d) + 1 - 1948440 + 10632;
+    const n = Math.floor((l - 1) / 10631);
+    l = l - 10631 * n + 354;
+    const j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719) + Math.floor(l / 5670) * Math.floor((43 * l) / 15238);
+    l = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+    const bulan = Math.floor((24 * l) / 709);
+    return { hari: l - Math.floor((709 * bulan) / 24), bulan, tahun: 30 * n + j - 30 };
+}
+
+function hijri(d) {
+    if (!formatUmmulQura) return hijriTabel(d) || hijriTabular(d);
+    const p = Object.fromEntries(formatUmmulQura.formatToParts(d).map(x => [x.type, x.value]));
+    return { hari: Number(p.day), bulan: Number(p.month), tahun: Number(p.year) };
+}
+
+const hijriBulanTahun = d => { const h = hijri(d); return `${BULAN_HIJRIAH[h.bulan - 1]} ${h.tahun} H`; };
+const hijriLengkap = d => `${hijri(d).hari} ${hijriBulanTahun(d)}`;
 
 function waktuSholat(tanggal) {
     const p = adhan.CalculationMethod.Other();
@@ -605,7 +658,7 @@ function renderSholat() {
     const sisa = menit >= 60 ? `${Math.floor(menit / 60)} jam ${menit % 60} menit` : `${menit} menit`;
 
     document.getElementById('sholat-tanggal').innerText =
-        `${sekarang.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • ${hijriah(sekarang, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+        `${sekarang.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • ${hijriLengkap(sekarang)}`;
     document.getElementById('sholat-berikut').innerHTML = `<i class="fa-regular fa-clock mr-2"></i>Menuju ${berikut[0]}: ${sisa} lagi`;
     list.innerHTML = baris.map(([nama, w]) => {
         const aktif = nama === berikut[0] && w.getTime() === berikut[1].getTime();
@@ -641,8 +694,8 @@ function renderKalender() {
     const adaAgenda = new Set(dataAgenda.map(a => a.tanggal));
 
     document.getElementById('kal-judul').innerText = bulanKalender.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    const hAwal = hijriah(new Date(th, bl, 1), { month: 'long', year: 'numeric' });
-    const hAkhir = hijriah(new Date(th, bl, jumlahHari), { month: 'long', year: 'numeric' });
+    const hAwal = hijriBulanTahun(new Date(th, bl, 1));
+    const hAkhir = hijriBulanTahun(new Date(th, bl, jumlahHari));
     document.getElementById('kal-hijriah').innerText = hAwal === hAkhir ? hAwal : `${hAwal.replace(/ \d+ H$/, '')} – ${hAkhir}`;
 
     let sel = '<div></div>'.repeat(new Date(th, bl, 1).getDay());
@@ -655,7 +708,7 @@ function renderKalender() {
         sel += `<button type="button" onclick="pilihTanggal('${iso}')" aria-label="${tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}${adaAgenda.has(iso) ? ', ada agenda' : ''}"
             class="relative min-h-12 rounded-lg flex flex-col items-center justify-center ${dipilih ? '' : 'hover:bg-emerald-50'} ${warna}">
             <span class="text-sm font-semibold leading-none">${d}</span>
-            <span class="text-[10px] leading-none mt-1 ${dipilih ? 'text-emerald-100' : 'text-slate-400'}">${hijriah(tgl, { day: 'numeric' })}</span>
+            <span class="text-[10px] leading-none mt-1 ${dipilih ? 'text-emerald-100' : 'text-slate-400'}">${hijri(tgl).hari}</span>
             ${adaAgenda.has(iso) ? `<span class="absolute bottom-1 w-1.5 h-1.5 rounded-full ${dipilih ? 'bg-white' : 'bg-amber-500'}"></span>` : ''}
         </button>`;
     }
