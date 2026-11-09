@@ -2,8 +2,8 @@
 // dan hasil unduhan sama persis. NIP tidak dicantumkan.
 
 const KARTU = { lebar: 1012, tinggi: 638 };
-let kartuBlob = null;
-let kartuNamaBerkas = 'kartu-anggota.png';
+let kartuBlob = { depan: null, belakang: null };
+let kartuNamaBerkas = 'kartu-anggota';
 
 function muatGambar(src) {
     return new Promise(ok => {
@@ -15,8 +15,9 @@ function muatGambar(src) {
     });
 }
 
+// Nomor dari database (bisa diubah admin); cadangan otomatis dari id
 function nomorAnggota(a) {
-    return `KKGPAI-CS-${String(a.id).padStart(4, '0')}`;
+    return a.nomor_anggota || `KKGPAI-CS-${String(a.id).padStart(4, '0')}`;
 }
 
 // Tulis teks satu baris; perkecil huruf bila terlalu panjang
@@ -138,49 +139,135 @@ async function gambarKartu(a) {
     return kanvas;
 }
 
+// Bagian belakang: logo besar, visi KKG, dan nilai KEREN
+async function gambarBelakang() {
+    const { lebar: W, tinggi: H } = KARTU;
+    const kanvas = document.createElement('canvas');
+    kanvas.width = W;
+    kanvas.height = H;
+    const ctx = kanvas.getContext('2d');
+    await document.fonts?.ready;
+    const logo = await muatGambar(logoPortal);
+
+    kotakBulat(ctx, 0, 0, W, H, 36);
+    ctx.save();
+    ctx.clip();
+    const latar = ctx.createLinearGradient(0, 0, W, H);
+    latar.addColorStop(0, '#047857');
+    latar.addColorStop(1, '#064e3b');
+    ctx.fillStyle = latar;
+    ctx.fillRect(0, 0, W, H);
+    // Pola titik emas halus
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+    for (let x = 20; x < W; x += 28) for (let y = 20; y < H; y += 28) ctx.fillRect(x, y, 3, 3);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(0, 0, W, 8);
+    ctx.fillRect(0, H - 8, W, 8);
+
+    // Logo
+    if (logo) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(190, H / 2, 140, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.clip();
+        ctx.drawImage(logo, 55, H / 2 - 135, 270, 270);
+        ctx.restore();
+    }
+
+    // Visi
+    const x = 380, lebarTeks = W - x - 50;
+    teksMuat(ctx, 'VISI', x, 165, lebarTeks, 30, '800', '#fbbf24');
+    const visi = 'Terwujudnya Guru PAI SD Kecamatan Cimahi Selatan yang KEREN (Kreatif, Edukatif, Religius, Empati dan Nalar Digital) dalam menghadapi perkembangan zaman.';
+    ctx.font = '600 27px Inter, Arial, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    let baris = '', y = 215;
+    for (const kata of visi.split(' ')) {
+        const coba = baris ? baris + ' ' + kata : kata;
+        if (ctx.measureText(coba).width > lebarTeks) {
+            ctx.fillText(baris, x, y);
+            baris = kata;
+            y += 40;
+        } else {
+            baris = coba;
+        }
+    }
+    ctx.fillText(baris, x, y);
+
+    // Lima huruf KEREN
+    const nilai = [['K', 'Kreatif', '#059669'], ['E', 'Edukatif', '#2563eb'], ['R', 'Religius', '#f59e0b'], ['E', 'Empati', '#f43f5e'], ['N', 'Nalar Digital', '#4f46e5']];
+    const lebarKotak = (lebarTeks - 4 * 12) / 5;
+    nilai.forEach(([huruf, kata, warna], i) => {
+        const kx = x + i * (lebarKotak + 12), ky = y + 45;
+        kotakBulat(ctx, kx, ky, lebarKotak, 92, 14);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fill();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = warna;
+        ctx.font = '800 38px Inter, Arial, sans-serif';
+        ctx.fillText(huruf, kx + lebarKotak / 2, ky + 46);
+        teksMuat(ctx, kata, kx + lebarKotak / 2, ky + 76, lebarKotak - 10, 15, '600', '#334155');
+        ctx.textAlign = 'left';
+    });
+
+    ctx.textAlign = 'right';
+    teksMuat(ctx, 'kkgpaisdcimsel26.web.id', W - 50, H - 36, 400, 20, '600', '#a7f3d0');
+    ctx.textAlign = 'left';
+    ctx.restore();
+    return kanvas;
+}
+
+const keBlob = kanvas => new Promise(ok => kanvas.toBlob(ok, 'image/png'));
+
 async function bukaKartu(id) {
     const a = dataAnggota.find(x => x.id === id);
     if (!a) return;
-    const img = document.getElementById('kartu-gambar');
-    img.classList.add('hidden');
+    document.getElementById('kartu-isi').classList.add('hidden');
     document.getElementById('kartu-memuat').classList.remove('hidden');
     document.getElementById('btn-unduh-kartu').disabled = true;
+    document.getElementById('btn-unduh-belakang').disabled = true;
     document.getElementById('btn-bagikan-kartu').disabled = true;
     document.getElementById('modal-kartu').classList.remove('hidden');
 
-    const kanvas = await gambarKartu(a);
-    kartuNamaBerkas = `kartu-anggota-${kunciNama(a.nama).split(',')[0].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
-    kanvas.toBlob(blob => {
-        kartuBlob = blob;
+    const [depan, blkg] = await Promise.all([gambarKartu(a), gambarBelakang()]);
+    kartuNamaBerkas = `kartu-anggota-${kunciNama(a.nama).split(',')[0].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    kartuBlob = { depan: await keBlob(depan), belakang: await keBlob(blkg) };
+
+    for (const [sisi, elId] of [['depan', 'kartu-gambar'], ['belakang', 'kartu-belakang']]) {
+        const img = document.getElementById(elId);
         if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
-        img.src = URL.createObjectURL(blob);
-        img.alt = `Kartu anggota ${a.nama}`;
-        img.classList.remove('hidden');
-        document.getElementById('kartu-memuat').classList.add('hidden');
-        document.getElementById('btn-unduh-kartu').disabled = false;
-        // Tombol Bagikan hanya aktif di perangkat yang bisa membagikan berkas (umumnya HP)
-        const berkas = new File([blob], kartuNamaBerkas, { type: 'image/png' });
-        document.getElementById('btn-bagikan-kartu').disabled = !(navigator.canShare && navigator.canShare({ files: [berkas] }));
-    }, 'image/png');
+        img.src = URL.createObjectURL(kartuBlob[sisi]);
+    }
+    document.getElementById('kartu-isi').classList.remove('hidden');
+    document.getElementById('kartu-memuat').classList.add('hidden');
+    document.getElementById('btn-unduh-kartu').disabled = false;
+    document.getElementById('btn-unduh-belakang').disabled = false;
+    // Tombol Bagikan hanya aktif di perangkat yang bisa membagikan berkas (umumnya HP)
+    document.getElementById('btn-bagikan-kartu').disabled = !(navigator.canShare && navigator.canShare({ files: berkasKartu() }));
+}
+
+function berkasKartu() {
+    return ['depan', 'belakang'].map(sisi => new File([kartuBlob[sisi]], `${kartuNamaBerkas}-${sisi}.png`, { type: 'image/png' }));
 }
 
 function tutupKartu() {
     document.getElementById('modal-kartu').classList.add('hidden');
 }
 
-function unduhKartu() {
-    if (!kartuBlob) return;
+function unduhKartu(sisi) {
+    if (!kartuBlob[sisi]) return;
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(kartuBlob);
-    a.download = kartuNamaBerkas;
+    a.href = URL.createObjectURL(kartuBlob[sisi]);
+    a.download = `${kartuNamaBerkas}-${sisi}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 async function bagikanKartu() {
-    if (!kartuBlob) return;
+    if (!kartuBlob.depan) return;
     try {
-        await navigator.share({ files: [new File([kartuBlob], kartuNamaBerkas, { type: 'image/png' })], title: 'Kartu Anggota KKG PAI SD' });
+        await navigator.share({ files: berkasKartu(), title: 'Kartu Anggota KKG PAI SD' });
     } catch (err) {
         if (err.name !== 'AbortError') showToast('Gagal membagikan. Gunakan tombol Unduh.');
     }

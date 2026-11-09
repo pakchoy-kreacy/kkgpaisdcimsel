@@ -233,12 +233,12 @@ async function loadPengurus() {
     }).join('');
 }
 
-// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik_v3) ----------
+// ---------- Anggota KKG (tanpa NIP, lewat fungsi daftar_anggota_publik_v4) ----------
 
 let dataAnggota = [];
 
 async function loadAnggota() {
-    const { data, error } = await db.rpc('daftar_anggota_publik_v3');
+    const { data, error } = await db.rpc('daftar_anggota_publik_v4');
     if (error) {
         console.error(error);
         document.getElementById('list-anggota').innerHTML = pesanKosong('Gagal memuat anggota.');

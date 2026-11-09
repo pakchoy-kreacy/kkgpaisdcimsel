@@ -15,7 +15,7 @@ async function muatInfaq() {
     isiPilihanTahun();
     const tahun = Number(document.getElementById('infaq-tahun').value);
     const [anggota, bayar, peng] = await Promise.all([
-        db.rpc('daftar_anggota_publik_v3'),
+        db.rpc('daftar_anggota_publik_v4'),
         db.from('infaq').select('*').eq('tahun', tahun),
         db.from('pengaturan').select('daftar_gugus, koordinator_gugus').eq('id', 1).single()
     ]);

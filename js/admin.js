@@ -617,6 +617,7 @@ const muatAnggota = buatDaftar('list-anggota', {
                 <div class="font-semibold break-words">${esc(r.nama)}
                     ${r.disetujui ? '' : '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">Menunggu</span>'}
                 </div>
+                <div class="text-xs font-semibold text-emerald-700">${esc(nomorAnggotaAdmin(r))}</div>
                 <div class="text-xs text-slate-500">${esc(r.sekolah)} • ${esc(r.kelurahan)} • ${esc(r.gugus)} • ${esc(r.status)}</div>
                 <button data-act="sertifikasi" class="mt-1 h-9 px-3 rounded-lg text-xs font-semibold ${r.sertifikasi === 'Sudah' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">Sertifikasi: ${esc(r.sertifikasi)} (ubah)</button>
             </div>
@@ -857,6 +858,8 @@ function isiPilihan(select, daftar, nilai) {
 function bukaEditAnggota(r) {
     anggotaDiedit = r;
     $('ed-nama').value = r.nama;
+    $('ed-nomor').value = r.nomor_anggota || '';
+    $('ed-nomor').placeholder = nomorAnggotaAdmin({ id: r.id });
     $('ed-nip').value = r.nip === '-' ? '' : r.nip;
     $('ed-sekolah').value = r.sekolah;
     isiPilihan($('ed-kelurahan'), daftarPilihan.kelurahan, r.kelurahan);
@@ -895,12 +898,14 @@ $('form-edit-anggota').addEventListener('submit', e => {
         }
         try {
             await cek(db.from('anggota').update({
-                nama: $('ed-nama').value, nip: $('ed-nip').value.trim() || '-', sekolah: $('ed-sekolah').value,
+                nama: $('ed-nama').value, nomor_anggota: $('ed-nomor').value.trim() || null,
+                nip: $('ed-nip').value.trim() || '-', sekolah: $('ed-sekolah').value,
                 kelurahan: $('ed-kelurahan').value, gugus: $('ed-gugus').value,
                 status: $('ed-status').value, sertifikasi: $('ed-sertifikasi').value, foto_path
             }).eq('id', r.id), 'Gagal menyimpan.');
         } catch (err) {
             if (file) await hapusBerkas('foto-anggota', foto_path);
+            if (/duplicate|unique/i.test(err.message)) throw new Error('Nomor anggota itu sudah dipakai anggota lain.');
             throw err;
         }
         if (r.foto_path && r.foto_path !== foto_path) await hapusBerkas('foto-anggota', r.foto_path);
@@ -909,12 +914,44 @@ $('form-edit-anggota').addEventListener('submit', e => {
     });
 });
 
-$('btn-csv-anggota').addEventListener('click', () => {
+// Nomor anggota: dari database jika diisi admin, selain itu otomatis dari id (sama dengan di kartu)
+function nomorAnggotaAdmin(r) {
+    return r.nomor_anggota || `KKGPAI-CS-${String(r.id).padStart(4, '0')}`;
+}
+
+// Unduh Excel: pustaka SheetJS baru dimuat saat tombol ditekan (berkasnya besar)
+function muatSheetJS() {
+    if (window.XLSX) return Promise.resolve();
+    return new Promise((ok, gagal) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+        sc.onload = ok;
+        sc.onerror = () => gagal(new Error('Pustaka Excel gagal dimuat. Periksa koneksi internet.'));
+        document.head.appendChild(sc);
+    });
+}
+
+$('btn-excel-anggota').addEventListener('click', async e => {
+    const btn = e.currentTarget;
     if (dataAnggota.length === 0) return alert('Belum ada data anggota.');
-    unduhCsv('anggota-kkg-pai-sd.csv', [
-        ['No', 'Nama', 'NIP/NUPTK', 'Sekolah', 'Kelurahan', 'Gugus', 'Status', 'Sertifikasi', 'Disetujui'],
-        ...dataAnggota.map((r, i) => [i + 1, r.nama, r.nip, r.sekolah, r.kelurahan, r.gugus, r.status, r.sertifikasi, r.disetujui ? 'Ya' : 'Belum'])
-    ]);
+    btn.disabled = true;
+    try {
+        await muatSheetJS();
+        const kepala = ['No', 'Nomor Anggota', 'Nama', 'NIP/NUPTK', 'Sekolah', 'Kelurahan', 'Gugus', 'Status Kepegawaian', 'Sertifikasi', 'Disetujui'];
+        const baris = dataAnggota.map((r, i) => [i + 1, nomorAnggotaAdmin(r), r.nama, r.nip, r.sekolah, r.kelurahan, r.gugus, r.status, r.sertifikasi, r.disetujui ? 'Ya' : 'Belum']);
+        const ws = XLSX.utils.aoa_to_sheet([kepala, ...baris]);
+        // Lebar kolom secukupnya agar langsung terbaca di Excel
+        ws['!cols'] = kepala.map((k, i) => ({ wch: Math.min(45, Math.max(k.length, ...baris.map(b => String(b[i] ?? '').length)) + 2) }));
+        ws['!autofilter'] = { ref: ws['!ref'] };
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Anggota');
+        XLSX.writeFile(wb, `anggota-kkg-pai-sd-${new Date().toLocaleDateString('sv-SE')}.xlsx`);
+    } catch (err) {
+        console.error(err);
+        alert(err.message);
+    } finally {
+        btn.disabled = false;
+    }
 });
 
 // ---------- Masukan ----------

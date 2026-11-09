@@ -877,10 +877,16 @@
             </button>
             <h3 class="text-lg font-bold text-slate-900 mb-4 pr-10">Kartu Anggota</h3>
             <p id="kartu-memuat" class="text-sm text-slate-500 py-10 text-center">Menyiapkan kartu...</p>
-            <img id="kartu-gambar" alt="Kartu anggota" class="hidden w-full rounded-xl shadow-lg border border-slate-200">
+            <div id="kartu-isi" class="hidden space-y-3">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Depan</p>
+                <img id="kartu-gambar" alt="Kartu anggota bagian depan" class="w-full rounded-xl shadow-lg border border-slate-200">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider pt-2">Belakang</p>
+                <img id="kartu-belakang" alt="Kartu anggota bagian belakang" class="w-full rounded-xl shadow-lg border border-slate-200">
+            </div>
             <div class="grid grid-cols-2 gap-3 mt-5">
-                <button id="btn-unduh-kartu" type="button" onclick="unduhKartu()" disabled class="h-12 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-50"><i class="fa-solid fa-download mr-2"></i>Unduh</button>
-                <button id="btn-bagikan-kartu" type="button" onclick="bagikanKartu()" disabled class="h-12 rounded-xl border border-emerald-600 text-emerald-700 font-bold disabled:opacity-50"><i class="fa-solid fa-share-nodes mr-2"></i>Bagikan</button>
+                <button id="btn-unduh-kartu" type="button" onclick="unduhKartu('depan')" disabled class="h-12 rounded-xl bg-emerald-600 text-white font-bold text-sm disabled:opacity-50"><i class="fa-solid fa-download mr-2"></i>Unduh Depan</button>
+                <button id="btn-unduh-belakang" type="button" onclick="unduhKartu('belakang')" disabled class="h-12 rounded-xl bg-emerald-600 text-white font-bold text-sm disabled:opacity-50"><i class="fa-solid fa-download mr-2"></i>Unduh Belakang</button>
+                <button id="btn-bagikan-kartu" type="button" onclick="bagikanKartu()" disabled class="col-span-2 h-12 rounded-xl border border-emerald-600 text-emerald-700 font-bold disabled:opacity-50"><i class="fa-solid fa-share-nodes mr-2"></i>Bagikan (depan & belakang)</button>
             </div>
             <p class="text-xs text-slate-400 mt-3">Data kartu mengikuti data anggota. Jika ada yang salah atau ingin menambah foto, gunakan tombol Edit.</p>
         </div>
