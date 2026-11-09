@@ -88,6 +88,7 @@ async function loadPengaturan() {
     }
     if (data.logo_path) {
         const logo = publicUrl('dokumentasi', data.logo_path);
+        logoPortal = logo;
         document.getElementById('kkg-logo').src = logo;
         document.getElementById('footer-logo').src = logo;
     }
@@ -114,6 +115,8 @@ async function loadPengaturan() {
 }
 
 const pilihan = { kelurahan: [], gugus: [] };
+
+let logoPortal = DEFAULT_LOGO; // dipakai juga untuk kartu anggota
 
 function isiDaftar(kelurahan, gugus) {
     pilihan.kelurahan = kelurahan;
@@ -332,7 +335,10 @@ function renderAnggota(halaman = halamanAnggota) {
             <div class="mt-1 text-xs text-slate-500">${escapeHtml(a.kelurahan)} • ${escapeHtml(a.gugus)}</div>
             <div class="mt-3 flex items-center justify-between gap-3">
                 ${badge(badgeSertifikasi(a.sertifikasi), 'Sertifikasi: ' + a.sertifikasi)}
-                <button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button>
+                <div class="flex gap-2">
+                    <button onclick="bukaKartu(${a.id})" class="h-11 px-4 rounded-xl bg-emerald-600 text-white text-sm font-bold"><i class="fa-solid fa-id-card mr-2"></i>Kartu</button>
+                    <button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button>
+                </div>
             </div>
         </div>`).join('') : pesanKosong(kosong);
 
@@ -345,7 +351,7 @@ function renderAnggota(halaman = halamanAnggota) {
             <td class="p-4">${escapeHtml(a.gugus)}</td>
             <td class="p-4">${badge(badgeStatus(a.status), a.status)}</td>
             <td class="p-4">${badge(badgeSertifikasi(a.sertifikasi), a.sertifikasi)}</td>
-            <td class="p-4 text-right"><button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button></td>
+            <td class="p-4 text-right whitespace-nowrap"><button onclick="bukaKartu(${a.id})" class="h-11 px-4 rounded-xl bg-emerald-600 text-white text-sm font-bold"><i class="fa-solid fa-id-card mr-2"></i>Kartu</button> <button onclick="openModalUsulan(${a.id})" class="h-11 px-4 rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-pen mr-2"></i>Edit</button></td>
         </tr>`).join('') : `<tr><td colspan="8">${pesanKosong(kosong)}</td></tr>`;
 }
 
