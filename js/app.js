@@ -497,9 +497,14 @@ function renderPerangkat() {
                 </div>
                 <h3 class="font-bold text-slate-800 break-words">${escapeHtml(i.judul)}</h3>
                 <p class="text-sm text-slate-600 mt-2 flex-1">${escapeHtml(i.deskripsi || '')}</p>
+                ${i.url ? `
                 <a href="${escapeHtml(href)}" target="_blank" rel="noopener" class="mt-4 h-11 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition">
-                    <i class="fa-solid ${i.url ? 'fa-arrow-up-right-from-square' : 'fa-download'} mr-2"></i>${i.url ? 'Buka Tautan' : 'Unduh Berkas'}
-                </a>
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>Buka Tautan
+                </a>` : `
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <button type="button" onclick="lihatBerkas(${i.id})" class="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition"><i class="fa-solid fa-eye mr-2"></i>Lihat</button>
+                    <a href="${escapeHtml(urlUnduh(i.file_path))}" class="h-11 flex items-center justify-center rounded-xl border border-emerald-600 text-emerald-700 text-sm font-bold"><i class="fa-solid fa-download mr-2"></i>Unduh</a>
+                </div>`}
             </div>`;
     }).join('');
 }
